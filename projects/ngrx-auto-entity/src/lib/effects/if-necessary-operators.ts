@@ -10,13 +10,12 @@ import { LoadRange, LoadRangeIfNecessary } from '../actions/load-range-actions';
 import {
   addSeconds,
   entityCurrentPage,
-  entityCurrentRange,
   entityIds,
   entityIsLoading,
   entityLoadedAt,
   getAppStore,
-  hasEntitiesLoaded,
-  isSubsequentRange,
+  hasEntitiesLoaded, hasPageLoaded,
+  hasRangeLoaded,
   nowAfterExpiry
 } from './if-necessary-operator-utils';
 
@@ -122,15 +121,16 @@ export class EntityIfNecessaryOperators {
             store.pipe(select(entityLoadedAt(info)), take(1)),
             store.pipe(select(entityIsLoading(info)), take(1)),
             store.pipe(select(hasEntitiesLoaded(info)), take(1)),
+            store.pipe(select(hasPageLoaded(info, page)), take(1)),
             of(info.defaultMaxAge),
-            store.pipe(select(entityCurrentPage(info)), take(1))
+            store.pipe(select(entityCurrentPage(info)), take(1)),
           ]).pipe(
-            map(([loadedAt, isLoading, hasEntities, defaultMaxAge, currentPage]) => ({
+            map(([loadedAt, isLoading, hasEntities, hasPage, defaultMaxAge, currentPage]) => ({
               loadedAt,
               isLoading,
               hasEntities,
               defaultMaxAge,
-              missing: !loadedAt || !hasEntities,
+              missing: !loadedAt || !hasEntities || !hasPage,
               samePage: page.page === currentPage.page,
               checkAge: !!defaultMaxAge || !!maxAge
             })),
@@ -154,24 +154,21 @@ export class EntityIfNecessaryOperators {
             store.pipe(select(entityLoadedAt(info)), take(1)),
             store.pipe(select(entityIsLoading(info)), take(1)),
             store.pipe(select(hasEntitiesLoaded(info)), take(1)),
+            store.pipe(select(hasRangeLoaded(info, range)), take(1)),
             of(info.defaultMaxAge),
-            store.pipe(select(entityCurrentRange(info)), take(1))
           ]).pipe(
-            map(([loadedAt, isLoading, hasEntities, defaultMaxAge, currentRange]) => ({
+            map(([loadedAt, isLoading, hasEntities, hasRange, defaultMaxAge]) => ({
               loadedAt,
               isLoading,
               hasEntities,
               defaultMaxAge,
-              missing: !loadedAt || !hasEntities,
-              nonFollowingRange: !isSubsequentRange(range, currentRange),
+              missing: !loadedAt || !hasEntities || !hasRange,
               checkAge: !!defaultMaxAge || !!maxAge
             })),
             filter(
-              ({ isLoading, missing, nonFollowingRange, checkAge, loadedAt, defaultMaxAge }) =>
+              ({ isLoading, missing, checkAge, loadedAt, defaultMaxAge }) =>
                 !isLoading &&
-                (missing ||
-                  !nonFollowingRange ||
-                  (checkAge ? nowAfterExpiry(addSeconds(new Date(loadedAt), maxAge || defaultMaxAge)) : missing))
+                (missing || (checkAge ? nowAfterExpiry(addSeconds(new Date(loadedAt), maxAge || defaultMaxAge)) : missing))
             ),
             map(() => new LoadRange(info.modelType, range, criteria, correlationId))
           )

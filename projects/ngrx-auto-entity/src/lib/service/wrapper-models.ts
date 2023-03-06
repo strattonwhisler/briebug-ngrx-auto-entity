@@ -1,5 +1,6 @@
 import { IEntityInfo } from '../actions/entity-info';
 import { IPageInfo, IRangeInfo } from '../models';
+import { EntityIdentity } from '../types/entity-identity';
 
 export interface IEntityError {
   info: IEntityInfo;

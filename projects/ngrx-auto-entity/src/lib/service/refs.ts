@@ -5,6 +5,7 @@ import { EntityIdentity } from '../types/entity-identity';
 export interface IEntityRef<TModel> {
   info: IEntityInfo;
   entity: TModel;
+  metadata?: any;
 }
 
 export interface IEntityIdentityRef {

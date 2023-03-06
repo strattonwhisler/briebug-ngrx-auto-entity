@@ -59,7 +59,8 @@ export class LoadRangeSuccess<TModel> extends EntityAction<TModel> {
     public entities: TModel[],
     public rangeInfo: IRangeInfo,
     public criteria?: any,
-    correlationId?: string
+    correlationId?: string,
+    public metadata?: any
   ) {
     super(type, EntityActionTypes.LoadRangeSuccess, correlationId);
   }

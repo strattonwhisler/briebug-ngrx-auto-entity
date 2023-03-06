@@ -3,6 +3,8 @@ import { LoadPageSuccess } from '../actions/load-page-actions';
 import { IEntityState } from '../util/entity-state';
 import { ReductionBasis } from './reducer';
 import { mergeMany, safeGetKey, setNewState, warnMissingPageInfo } from './reduction.utils';
+import { DomainInfo, mapPageToDomain } from '../models';
+import { cloneDomains, mergeSingleDomain } from './domain-reduction.utils';
 
 export const loadPageReducer = ({ state, action, stateName, featureName, entityState }: ReductionBasis) => {
   switch (action.actionType) {
@@ -33,10 +35,16 @@ export const loadPageReducer = ({ state, action, stateName, featureName, entityS
     case EntityActionTypes.LoadPageSuccess: {
       const loadPageEntities = (action as LoadPageSuccess<any>).entities;
       const loadedIds = loadPageEntities.map(entity => safeGetKey(action, entity));
+      const domains = cloneDomains(entityState.paging.domains);
       const pageInfo = (action as LoadPageSuccess<any>).pageInfo;
       if (!pageInfo) {
         warnMissingPageInfo(action);
       }
+
+      const newDomain: DomainInfo = pageInfo ? {
+        domain: mapPageToDomain(pageInfo.page),
+        ids: loadedIds,
+      } : undefined;
 
       const newState: IEntityState<any> = {
         ...entityState,
@@ -44,6 +52,7 @@ export const loadPageReducer = ({ state, action, stateName, featureName, entityS
         ids: loadedIds,
         paging: {
           ...entityState.tracking,
+          domains: newDomain ? mergeSingleDomain(domains, newDomain) : domains,
           currentPage: pageInfo.page,
           totalPageableCount: pageInfo.totalCount
         },

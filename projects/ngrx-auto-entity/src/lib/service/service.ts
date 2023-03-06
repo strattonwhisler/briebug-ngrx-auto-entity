@@ -7,7 +7,15 @@ import { EntityIdentity } from '../types/entity-identity';
 import { IEntityIdentitiesRef, IEntityIdentityRef, IEntityPageRef, IEntityRangeRef, IEntityRef } from './refs';
 import { callService } from './service-invocation';
 import { transformArrayFromServer, transformArrayToServer, transformSingleFromServer, transformSingleToServer } from './transformation';
-import { IEntityWithPageInfo, IEntityWithRangeInfo } from './wrapper-models';
+import {
+  ensureEntities,
+  ensureEntity, ensureKey, ensureKeys,
+  IEntities,
+  IEntity, IEntityKey,
+  IEntityKeys,
+  IEntityWithPageInfo,
+  IEntityWithRangeInfo
+} from './wrapper-models';
 
 /**
  * Looks up client-provided entity service class using Angular's injector and this package's naming
@@ -56,7 +64,8 @@ export class NgrxAutoEntityService {
       result => ({
         info: entityInfo,
         pageInfo: result.pageInfo,
-        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[]
+        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[],
+        metadata: result.metadata,
       })
     );
   }
@@ -70,7 +79,8 @@ export class NgrxAutoEntityService {
       result => ({
         info: entityInfo,
         rangeInfo: result.rangeInfo,
-        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[]
+        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[],
+        metadata: result.metadata,
       })
     );
   }

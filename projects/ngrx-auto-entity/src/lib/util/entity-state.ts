@@ -1,4 +1,4 @@
-import { Page, Range } from '../models';
+import { Page, Range, DomainInfo } from '../models';
 import { EntityIdentity } from '../types/entity-identity';
 
 /**
@@ -32,6 +32,7 @@ export interface IEntityPaging {
   currentPage?: Page;
   currentRange?: Range;
   totalPageableCount?: number;
+  domains?: DomainInfo[];
 }
 
 /**

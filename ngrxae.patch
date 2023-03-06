@@ -1,0 +1,604 @@
+diff --git a/projects/ngrx-auto-entity/src/index.ts b/projects/ngrx-auto-entity/src/index.ts
+index a3b4d4b..25d09d8 100644
+--- a/projects/ngrx-auto-entity/src/index.ts
++++ b/projects/ngrx-auto-entity/src/index.ts
+@@ -143,7 +143,7 @@ export { NgrxAutoEntityService } from './lib/service/service';
+ export { IAutoEntityService } from './lib/service/interface';
+
+ export { IEntityRangeRef, IEntityPageRef, IEntityRef, IEntityIdentityRef, IEntityIdentitiesRef } from './lib/service/refs';
+-export { IEntityWithRangeInfo, IEntityWithPageInfo, IEntityError } from './lib/service/wrapper-models';
++export { IEntity, IEntities, IEntityKey, IEntityKeys, IEntityWithRangeInfo, IEntityWithPageInfo, IEntityError } from './lib/service/wrapper-models';
+
+ /*
+  * Transformation utilities
+diff --git a/projects/ngrx-auto-entity/src/lib/actions/load-all-actions.ts b/projects/ngrx-auto-entity/src/lib/actions/load-all-actions.ts
+index 4b2fbca..1a4178e 100644
+--- a/projects/ngrx-auto-entity/src/lib/actions/load-all-actions.ts
++++ b/projects/ngrx-auto-entity/src/lib/actions/load-all-actions.ts
+@@ -47,7 +47,7 @@ export class LoadAll<TModel> extends EntityAction<TModel> {
+  * @param correlationId - (optional) The correlationId for this action; correlates to initial load all action
+  */
+ export class LoadAllSuccess<TModel> extends EntityAction<TModel> {
+-  constructor(type: new () => TModel, public entities: TModel[], public criteria?: any, correlationId?: string) {
++  constructor(type: new () => TModel, public entities: TModel[], public criteria?: any, correlationId?: string, public metadata?: any) {
+     super(type, EntityActionTypes.LoadAllSuccess, correlationId);
+   }
+ }
+diff --git a/projects/ngrx-auto-entity/src/lib/actions/load-range-actions.ts b/projects/ngrx-auto-entity/src/lib/actions/load-range-actions.ts
+index caf0588..3af5ec2 100644
+--- a/projects/ngrx-auto-entity/src/lib/actions/load-range-actions.ts
++++ b/projects/ngrx-auto-entity/src/lib/actions/load-range-actions.ts
+@@ -59,7 +59,8 @@ export class LoadRangeSuccess<TModel> extends EntityAction<TModel> {
+     public entities: TModel[],
+     public rangeInfo: IRangeInfo,
+     public criteria?: any,
+-    correlationId?: string
++    correlationId?: string,
++    public metadata?: any
+   ) {
+     super(type, EntityActionTypes.LoadRangeSuccess, correlationId);
+   }
+diff --git a/projects/ngrx-auto-entity/src/lib/effects/operators.ts b/projects/ngrx-auto-entity/src/lib/effects/operators.ts
+index 5df1b96..eee90eb 100644
+--- a/projects/ngrx-auto-entity/src/lib/effects/operators.ts
++++ b/projects/ngrx-auto-entity/src/lib/effects/operators.ts
+@@ -106,7 +106,7 @@ export class EntityOperators {
+         shouldApplyEffect(),
+         mergeMap(({ info, criteria, correlationId }) => {
+           return this.entityService.loadAll(info, criteria).pipe(
+-            map((ref: IEntityRef<TModel[]>) => new LoadAllSuccess<TModel>(ref.info.modelType, ref.entity, criteria, correlationId)),
++            map((ref: IEntityRef<TModel[]>) => new LoadAllSuccess<TModel>(ref.info.modelType, ref.entity, criteria, correlationId, ref.metadata)),
+             catchError((error: IEntityError) =>
+               handleError(error, new LoadAllFailure<TModel>(error.info.modelType, error.err, criteria, correlationId), 'loadAll')
+             )
+@@ -141,7 +141,7 @@ export class EntityOperators {
+           return this.entityService.loadRange(info, range, criteria).pipe(
+             map(
+               (ref: IEntityRangeRef<TModel>) =>
+-                new LoadRangeSuccess<TModel>(ref.info.modelType, ref.entity, ref.rangeInfo, criteria, correlationId)
++                new LoadRangeSuccess<TModel>(ref.info.modelType, ref.entity, ref.rangeInfo, criteria, correlationId, ref.metadata)
+             ),
+             catchError((error: IEntityError) =>
+               handleError(error, new LoadRangeFailure<TModel>(error.info.modelType, error.err, range, criteria, correlationId), 'loadRange')
+diff --git a/projects/ngrx-auto-entity/src/lib/factories/load-all-factories.ts b/projects/ngrx-auto-entity/src/lib/factories/load-all-factories.ts
+index 7e992a6..152df8f 100644
+--- a/projects/ngrx-auto-entity/src/lib/factories/load-all-factories.ts
++++ b/projects/ngrx-auto-entity/src/lib/factories/load-all-factories.ts
+@@ -2,7 +2,7 @@ import { ActionCreator } from '@ngrx/store';
+ import { EntityActionTypes } from '../actions/action-types';
+ import { TNew } from '../actions/model-constructor';
+ import { setActionType } from '../actions/util';
+-import { cacheOnType, defineTypedFactoryFunction, StandardProps } from './util';
++import { cacheOnType, defineTypedFactoryFunction, StandardProps, StandardSuccessProps } from './util';
+ import { LoadAll, LoadAllFailure, LoadAllIfNecessary, LoadAllSuccess } from '../actions/load-all-actions';
+
+ export const createLoadAllAction = <TModel, T extends string, P extends StandardProps>(
+@@ -29,7 +29,7 @@ export const createLoadAllIfNecessaryAction = <TModel, T extends string, P exten
+     )
+   );
+
+-export interface LoadAllSuccessProps<TModel> extends StandardProps {
++export interface LoadAllSuccessProps<TModel> extends StandardSuccessProps {
+   entities: TModel[];
+ }
+
+@@ -39,7 +39,7 @@ export const createLoadAllSuccessAction = <TModel, T extends string, P extends L
+   cacheOnType(Type, EntityActionTypes.LoadAllSuccess, () =>
+     defineTypedFactoryFunction(
+       setActionType(EntityActionTypes.LoadAllSuccess, Type),
+-      ({ entities, criteria, correlationId }: LoadAllSuccessProps<TModel>) => new LoadAllSuccess(Type, entities, criteria, correlationId)
++      ({ entities, criteria, correlationId, metadata }: LoadAllSuccessProps<TModel>) => new LoadAllSuccess(Type, entities, criteria, correlationId, metadata)
+     )
+   );
+
+diff --git a/projects/ngrx-auto-entity/src/lib/factories/load-range-factories.ts b/projects/ngrx-auto-entity/src/lib/factories/load-range-factories.ts
+index cf98997..7a31c08 100644
+--- a/projects/ngrx-auto-entity/src/lib/factories/load-range-factories.ts
++++ b/projects/ngrx-auto-entity/src/lib/factories/load-range-factories.ts
+@@ -2,8 +2,8 @@ import { ActionCreator } from '@ngrx/store';
+ import { EntityActionTypes } from '../actions/action-types';
+ import { TNew } from '../actions/model-constructor';
+ import { setActionType } from '../actions/util';
+-import { Range } from '../models';
+-import { cacheOnType, defineTypedFactoryFunction, StandardProps } from './util';
++import { IRangeInfo, Range } from '../models';
++import { cacheOnType, defineTypedFactoryFunction, StandardProps, StandardSuccessProps } from './util';
+ import { LoadRange, LoadRangeFailure, LoadRangeIfNecessary, LoadRangeSuccess } from '../actions/load-range-actions';
+
+ export interface LoadRangeProps extends StandardProps {
+@@ -35,7 +35,8 @@ export const createLoadRangeIfNecessaryAction = <TModel, T extends string, P ext
+     )
+   );
+
+-export interface LoadRangeSuccessProps<TModel> extends StandardProps {
++export interface LoadRangeSuccessProps<TModel> extends StandardSuccessProps {
++  rangeInfo: IRangeInfo;
+   entities: TModel[];
+ }
+
+@@ -45,13 +46,14 @@ export const createLoadRangeSuccessAction = <TModel, T extends string, P extends
+   cacheOnType(Type, EntityActionTypes.LoadRangeSuccess, () =>
+     defineTypedFactoryFunction(
+       setActionType(EntityActionTypes.LoadRangeSuccess, Type),
+-      ({ entities, criteria, correlationId }: LoadRangeSuccessProps<TModel>) =>
+-        new LoadRangeSuccess(Type, entities, criteria, correlationId)
++      ({ entities, rangeInfo, criteria, correlationId, metadata }: LoadRangeSuccessProps<TModel>) =>
++        new LoadRangeSuccess(Type, entities, rangeInfo, criteria, correlationId, metadata)
+     )
+   );
+
+ export interface LoadRangeFailureProps<TModel> extends StandardProps {
+   error: any;
++  range: Range;
+ }
+
+ export const createLoadRangeFailureAction = <TModel, T extends string, P extends LoadRangeFailureProps<TModel>>(
+@@ -60,6 +62,7 @@ export const createLoadRangeFailureAction = <TModel, T extends string, P extends
+   cacheOnType(Type, EntityActionTypes.LoadRangeFailure, () =>
+     defineTypedFactoryFunction(
+       setActionType(EntityActionTypes.LoadRangeFailure, Type),
+-      ({ error, criteria, correlationId }: LoadRangeFailureProps<TModel>) => new LoadRangeFailure(Type, error, criteria, correlationId)
++      ({ error, range, criteria, correlationId }: LoadRangeFailureProps<TModel>) =>
++        new LoadRangeFailure(Type, error, range, criteria, correlationId)
+     )
+   );
+diff --git a/projects/ngrx-auto-entity/src/lib/factories/util.ts b/projects/ngrx-auto-entity/src/lib/factories/util.ts
+index ce5d0ee..73df622 100644
+--- a/projects/ngrx-auto-entity/src/lib/factories/util.ts
++++ b/projects/ngrx-auto-entity/src/lib/factories/util.ts
+@@ -10,6 +10,10 @@ export interface StandardProps extends CorrelatedProps {
+   criteria?: any;
+ }
+
++export interface StandardSuccessProps extends StandardProps {
++  metadata?: any;
++}
++
+ export const NAE_TYPE_ACTION_CACHE = '__nae_type_action_cache';
+ export const cacheOnType = <TModel, TAction extends EntityAction<TModel>, T extends string>(
+   Type: TNew<TModel>,
+diff --git a/projects/ngrx-auto-entity/src/lib/service/interface.ts b/projects/ngrx-auto-entity/src/lib/service/interface.ts
+index 44c7f97..3fe41fb 100644
+--- a/projects/ngrx-auto-entity/src/lib/service/interface.ts
++++ b/projects/ngrx-auto-entity/src/lib/service/interface.ts
+@@ -3,41 +3,48 @@ import { EntityIdentity } from '../types/entity-identity';
+
+ import { IEntityInfo } from '../actions/entity-info';
+ import { Page, Range } from '../models';
+-import { IEntityWithPageInfo, IEntityWithRangeInfo } from './wrapper-models';
++import {
++  IEntities,
++  IEntity,
++  IEntityKey,
++  IEntityKeys,
++  IEntityWithPageInfo,
++  IEntityWithRangeInfo
++} from './wrapper-models';
+
+ // prettier-ignore
+ export interface IAutoEntityService<TModel> {
+-  load?(entityInfo: IEntityInfo, keys: any, criteria?: any): Observable<TModel>;
++  load?(entityInfo: IEntityInfo, keys: any, criteria?: any): Observable<IEntity<TModel>>;
+
+-  loadMany?(entityInfo: IEntityInfo, criteria?: any): Observable<TModel[]>;
++  loadMany?(entityInfo: IEntityInfo, criteria?: any): Observable<IEntities<TModel>>;
+
+-  loadAll?(entityInfo: IEntityInfo, criteria?: any): Observable<TModel[]>;
++  loadAll?(entityInfo: IEntityInfo, criteria?: any): Observable<IEntities<TModel>>;
+
+   loadPage?(entityInfo: IEntityInfo, page: Page, criteria?: any): Observable<IEntityWithPageInfo<TModel>>;
+
+   loadRange?(entityInfo: IEntityInfo, range: Range, criteria?: any): Observable<IEntityWithRangeInfo<TModel>>;
+
+-  create?(entityInfo: IEntityInfo, entity: TModel | any, criteria?: any, originalEntity?: TModel): Observable<TModel>;
++  create?(entityInfo: IEntityInfo, entity: TModel | any, criteria?: any, originalEntity?: TModel): Observable<IEntity<TModel>>;
+
+-  createMany?(entityInfo: IEntityInfo, entities: Array<TModel | any>, criteria?: any, originalEntities?: TModel[]): Observable<TModel[]>;
++  createMany?(entityInfo: IEntityInfo, entities: Array<TModel | any>, criteria?: any, originalEntities?: TModel[]): Observable<IEntities<TModel>>;
+
+-  update?(entityInfo: IEntityInfo, entity: TModel | any, criteria?: any, originalEntity?: TModel): Observable<TModel>;
++  update?(entityInfo: IEntityInfo, entity: TModel | any, criteria?: any, originalEntity?: TModel): Observable<IEntity<TModel>>;
+
+-  updateMany?(entityInfo: IEntityInfo, entities: Array<TModel | any>, criteria?: any, originalEntities?: TModel[]): Observable<TModel[]>;
++  updateMany?(entityInfo: IEntityInfo, entities: Array<TModel | any>, criteria?: any, originalEntities?: TModel[]): Observable<IEntities<TModel>>;
+
+-  upsert?(entityInfo: IEntityInfo, entity: TModel | any, criteria?: any, originalEntity?: TModel): Observable<TModel>;
++  upsert?(entityInfo: IEntityInfo, entity: TModel | any, criteria?: any, originalEntity?: TModel): Observable<IEntity<TModel>>;
+
+-  upsertMany?(entityInfo: IEntityInfo, entities: Array<TModel | any>, criteria?: any, originalEntities?: TModel[]): Observable<TModel[]>;
++  upsertMany?(entityInfo: IEntityInfo, entities: Array<TModel | any>, criteria?: any, originalEntities?: TModel[]): Observable<IEntities<TModel>>;
+
+-  replace?(entityInfo: IEntityInfo, entity: TModel | any, criteria?: any, originalEntity?: TModel): Observable<TModel>;
++  replace?(entityInfo: IEntityInfo, entity: TModel | any, criteria?: any, originalEntity?: TModel): Observable<IEntity<TModel>>;
+
+-  replaceMany?(entityInfo: IEntityInfo, entities: Array<TModel | any>, criteria?: any, originalEntities?: TModel[]): Observable<TModel[]>;
++  replaceMany?(entityInfo: IEntityInfo, entities: Array<TModel | any>, criteria?: any, originalEntities?: TModel[]): Observable<IEntities<TModel>>;
+
+-  delete?(entityInfo: IEntityInfo, entity: TModel | any, criteria?: any, originalEntity?: TModel): Observable<TModel>;
++  delete?(entityInfo: IEntityInfo, entity: TModel | any, criteria?: any, originalEntity?: TModel): Observable<IEntity<TModel>>;
+
+-  deleteMany?(entityInfo: IEntityInfo, entities: Array<TModel | any>, criteria?: any, originalEntities?: TModel[]): Observable<TModel[]>;
++  deleteMany?(entityInfo: IEntityInfo, entities: Array<TModel | any>, criteria?: any, originalEntities?: TModel[]): Observable<IEntities<TModel>>;
+
+-  deleteByKey?(entityInfo: IEntityInfo, key: EntityIdentity, criteria?: any): Observable<EntityIdentity>;
++  deleteByKey?(entityInfo: IEntityInfo, key: EntityIdentity, criteria?: any): Observable<IEntityKey>;
+
+-  deleteManyByKeys?(entityInfo: IEntityInfo, keys: EntityIdentity[], criteria?: any): Observable<EntityIdentity[]>;
++  deleteManyByKeys?(entityInfo: IEntityInfo, keys: EntityIdentity[], criteria?: any): Observable<IEntityKeys>;
+ }
+diff --git a/projects/ngrx-auto-entity/src/lib/service/refs.ts b/projects/ngrx-auto-entity/src/lib/service/refs.ts
+index 1992884..9817b0b 100644
+--- a/projects/ngrx-auto-entity/src/lib/service/refs.ts
++++ b/projects/ngrx-auto-entity/src/lib/service/refs.ts
+@@ -5,6 +5,7 @@ import { EntityIdentity } from '../types/entity-identity';
+ export interface IEntityRef<TModel> {
+   info: IEntityInfo;
+   entity: TModel;
++  metadata?: any;
+ }
+
+ export interface IEntityIdentityRef {
+diff --git a/projects/ngrx-auto-entity/src/lib/service/service.ts b/projects/ngrx-auto-entity/src/lib/service/service.ts
+index d696e5b..dda4a2e 100644
+--- a/projects/ngrx-auto-entity/src/lib/service/service.ts
++++ b/projects/ngrx-auto-entity/src/lib/service/service.ts
+@@ -7,7 +7,15 @@ import { EntityIdentity } from '../types/entity-identity';
+ import { IEntityIdentitiesRef, IEntityIdentityRef, IEntityPageRef, IEntityRangeRef, IEntityRef } from './refs';
+ import { callService } from './service-invocation';
+ import { transformArrayFromServer, transformArrayToServer, transformSingleFromServer, transformSingleToServer } from './transformation';
+-import { IEntityWithPageInfo, IEntityWithRangeInfo } from './wrapper-models';
++import {
++  ensureEntities,
++  ensureEntity, ensureKey, ensureKeys,
++  IEntities,
++  IEntity, IEntityKey,
++  IEntityKeys,
++  IEntityWithPageInfo,
++  IEntityWithRangeInfo
++} from './wrapper-models';
+
+ /**
+  * Looks up client-provided entity service class using Angular's injector and this package's naming
+@@ -18,32 +26,44 @@ export class NgrxAutoEntityService {
+   constructor(private injector: Injector) {}
+
+   load<TModel>(entityInfo: IEntityInfo, keys: any, criteria?: any): Observable<IEntityRef<TModel>> {
+-    return callService<TModel, TModel, IEntityRef<TModel>>(
++    return callService<TModel, IEntity<TModel>, IEntityRef<TModel>>(
+       'load',
+       entityInfo,
+       this.injector,
+       service => service.load(entityInfo, keys, criteria),
+-      entity => ({ info: entityInfo, entity: transformSingleFromServer(entityInfo, criteria)(entity) as TModel })
++      ensureEntity(result => ({
++        info: entityInfo,
++        entity: transformSingleFromServer(entityInfo, criteria)(result.entity) as TModel,
++        metadata: result.metadata,
++      }))
+     );
+   }
+
+   loadAll<TModel>(entityInfo: IEntityInfo, criteria?: any): Observable<IEntityRef<TModel[]>> {
+-    return callService<TModel, TModel[], IEntityRef<TModel[]>>(
++    return callService<TModel, IEntities<TModel>, IEntityRef<TModel[]>>(
+       'loadAll',
+       entityInfo,
+       this.injector,
+       service => service.loadAll(entityInfo, criteria),
+-      entities => ({ info: entityInfo, entity: transformArrayFromServer(entityInfo, criteria)(entities) as TModel[] })
++      ensureEntities(result => ({
++        info: entityInfo,
++        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[],
++        metadata: result.metadata,
++      }))
+     );
+   }
+
+   loadMany<TModel>(entityInfo: IEntityInfo, criteria?: any): Observable<IEntityRef<TModel[]>> {
+-    return callService<TModel, TModel[], IEntityRef<TModel[]>>(
++    return callService<TModel, IEntities<TModel>, IEntityRef<TModel[]>>(
+       'loadMany',
+       entityInfo,
+       this.injector,
+       service => service.loadMany(entityInfo, criteria),
+-      entities => ({ info: entityInfo, entity: transformArrayFromServer(entityInfo, criteria)(entities) as TModel[] })
++      ensureEntities(result => ({
++        info: entityInfo,
++        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[],
++        metadata: result.metadata,
++      }))
+     );
+   }
+
+@@ -56,7 +76,8 @@ export class NgrxAutoEntityService {
+       result => ({
+         info: entityInfo,
+         pageInfo: result.pageInfo,
+-        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[]
++        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[],
++        metadata: result.metadata,
+       })
+     );
+   }
+@@ -70,144 +91,179 @@ export class NgrxAutoEntityService {
+       result => ({
+         info: entityInfo,
+         rangeInfo: result.rangeInfo,
+-        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[]
++        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[],
++        metadata: result.metadata,
+       })
+     );
+   }
+
+   create<TModel>(entityInfo: IEntityInfo, entity: TModel, criteria?: any): Observable<IEntityRef<TModel>> {
+     const transformed = transformSingleToServer(entityInfo, criteria)(entity);
+-    return callService<TModel, TModel, IEntityRef<TModel>>(
++    return callService<TModel, IEntity<TModel>, IEntityRef<TModel>>(
+       'create',
+       entityInfo,
+       this.injector,
+       service => service.create(entityInfo, transformed, criteria, entity),
+-      created => ({ info: entityInfo, entity: transformSingleFromServer(entityInfo, criteria)(created) as TModel })
++      ensureEntity(result => ({
++        info: entityInfo,
++        entity: transformSingleFromServer(entityInfo, criteria)(result.entity) as TModel,
++        metadata: result.metadata
++      }))
+     );
+   }
+
+   createMany<TModel>(entityInfo: IEntityInfo, entities: TModel[], criteria?: any): Observable<IEntityRef<TModel[]>> {
+     const transformed = transformArrayToServer(entityInfo, criteria)(entities);
+-    return callService<TModel, TModel[], IEntityRef<TModel[]>>(
++    return callService<TModel, IEntities<TModel>, IEntityRef<TModel[]>>(
+       'createMany',
+       entityInfo,
+       this.injector,
+       service => service.createMany(entityInfo, transformed, criteria, entities),
+-      created => ({ info: entityInfo, entity: transformArrayFromServer(entityInfo, criteria)(created) as TModel[] })
++      ensureEntities(result => ({
++        info: entityInfo,
++        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[],
++        metadata: result.metadata,
++      }))
+     );
+   }
+
+   update<TModel>(entityInfo: IEntityInfo, entity: TModel, criteria?: any): Observable<IEntityRef<TModel>> {
+     const transformed = transformSingleToServer(entityInfo, criteria)(entity);
+-    return callService<TModel, TModel, IEntityRef<TModel>>(
++    return callService<TModel, IEntity<TModel>, IEntityRef<TModel>>(
+       'update',
+       entityInfo,
+       this.injector,
+       service => service.update(entityInfo, transformed, criteria, entity),
+-      updated => ({ info: entityInfo, entity: transformSingleFromServer(entityInfo, criteria)(updated) as TModel })
++      ensureEntity(result => ({
++        info: entityInfo,
++        entity: transformSingleFromServer(entityInfo, criteria)(result.entity) as TModel,
++        metadata: result.metadata
++      }))
+     );
+   }
+
+   updateMany<TModel>(entityInfo: IEntityInfo, entities: TModel[], criteria?: any): Observable<IEntityRef<TModel[]>> {
+     const transformed = transformArrayToServer(entityInfo, criteria)(entities);
+-    return callService<TModel, TModel[], IEntityRef<TModel[]>>(
++    return callService<TModel, IEntities<TModel>, IEntityRef<TModel[]>>(
+       'updateMany',
+       entityInfo,
+       this.injector,
+       service => service.updateMany(entityInfo, transformed, criteria, entities),
+-      updatedEntities => ({
++      ensureEntities(result => ({
+         info: entityInfo,
+-        entity: transformArrayFromServer(entityInfo, criteria)(updatedEntities) as TModel[]
+-      })
++        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[],
++        metadata: result.metadata,
++      }))
+     );
+   }
+
+   upsert<TModel>(entityInfo: IEntityInfo, entity: TModel, criteria?: any): Observable<IEntityRef<TModel>> {
+     const transformed = transformSingleToServer(entityInfo, criteria)(entity);
+-    return callService<TModel, TModel, IEntityRef<TModel>>(
++    return callService<TModel, IEntity<TModel>, IEntityRef<TModel>>(
+       'upsert',
+       entityInfo,
+       this.injector,
+       service => service.upsert(entityInfo, transformed, criteria, entity),
+-      upserted => ({ info: entityInfo, entity: transformSingleFromServer(entityInfo, criteria)(upserted) as TModel })
++      ensureEntity(result => ({
++        info: entityInfo,
++        entity: transformSingleFromServer(entityInfo, criteria)(result.entity) as TModel,
++        metadata: result.metadata
++      }))
+     );
+   }
+
+   upsertMany<TModel>(entityInfo: IEntityInfo, entities: TModel[], criteria?: any): Observable<IEntityRef<TModel[]>> {
+     const transformed = transformArrayToServer(entityInfo, criteria)(entities);
+-    return callService<TModel, TModel[], IEntityRef<TModel[]>>(
++    return callService<TModel, IEntities<TModel>, IEntityRef<TModel[]>>(
+       'upsertMany',
+       entityInfo,
+       this.injector,
+       service => service.upsertMany(entityInfo, transformed, criteria, entities),
+-      upsertedEntities => ({
++      ensureEntities(result => ({
+         info: entityInfo,
+-        entity: transformArrayFromServer(entityInfo, criteria)(upsertedEntities) as TModel[]
+-      })
++        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[],
++        metadata: result.metadata,
++      }))
+     );
+   }
+
+   replace<TModel>(entityInfo: IEntityInfo, entity: TModel, criteria?: any): Observable<IEntityRef<TModel>> {
+     const transformed = transformSingleToServer(entityInfo, criteria)(entity);
+-    return callService<TModel, TModel, IEntityRef<TModel>>(
++    return callService<TModel, IEntity<TModel>, IEntityRef<TModel>>(
+       'replace',
+       entityInfo,
+       this.injector,
+       service => service.replace(entityInfo, transformed, criteria, entity),
+-      replaced => ({ info: entityInfo, entity: transformSingleFromServer(entityInfo, criteria)(replaced) as TModel })
++      ensureEntity(result => ({
++        info: entityInfo,
++        entity: transformSingleFromServer(entityInfo, criteria)(result.entity) as TModel,
++        metadata: result.metadata
++      }))
+     );
+   }
+
+   replaceMany<TModel>(entityInfo: IEntityInfo, entities: TModel[], criteria?: any): Observable<IEntityRef<TModel[]>> {
+     const transformed = transformArrayToServer(entityInfo, criteria)(entities);
+-    return callService<TModel, TModel[], IEntityRef<TModel[]>>(
++    return callService<TModel, IEntities<TModel>, IEntityRef<TModel[]>>(
+       'replaceMany',
+       entityInfo,
+       this.injector,
+       service => service.replaceMany(entityInfo, transformed, criteria, entities),
+-      replaced => ({ info: entityInfo, entity: transformArrayFromServer(entityInfo, criteria)(replaced) as TModel[] })
++      ensureEntities(result => ({
++        info: entityInfo,
++        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[],
++        metadata: result.metadata,
++      }))
+     );
+   }
+
+   delete<TModel>(entityInfo: IEntityInfo, entity: TModel, criteria?: any): Observable<IEntityRef<TModel>> {
+     const transformed = transformSingleToServer(entityInfo, criteria)(entity);
+-    return callService<TModel, TModel, IEntityRef<TModel>>(
++    return callService<TModel, IEntity<TModel>, IEntityRef<TModel>>(
+       'delete',
+       entityInfo,
+       this.injector,
+       service => service.delete(entityInfo, transformed, criteria, entity),
+-      deleted => ({ info: entityInfo, entity: transformSingleFromServer(entityInfo, criteria)(deleted) as TModel })
++      ensureEntity(result => ({
++        info: entityInfo,
++        entity: transformSingleFromServer(entityInfo, criteria)(result.entity) as TModel,
++        metadata: result.metadata
++      }))
+     );
+   }
+
+   deleteMany<TModel>(entityInfo: IEntityInfo, entities: TModel[], criteria?: any): Observable<IEntityRef<TModel[]>> {
+     const transformed = transformArrayToServer(entityInfo, criteria)(entities);
+-    return callService<TModel, TModel[], IEntityRef<TModel[]>>(
++    return callService<TModel, IEntities<TModel>, IEntityRef<TModel[]>>(
+       'deleteMany',
+       entityInfo,
+       this.injector,
+       service => service.deleteMany(entityInfo, transformed, criteria, entities),
+-      deleted => ({ info: entityInfo, entity: transformArrayFromServer(entityInfo, criteria)(deleted) as TModel[] })
++      ensureEntities(result => ({
++        info: entityInfo,
++        entity: transformArrayFromServer(entityInfo, criteria)(result.entities) as TModel[],
++        metadata: result.metadata,
++      }))
+     );
+   }
+
+   deleteByKey<TModel>(entityInfo: IEntityInfo, key: EntityIdentity, criteria?: any): Observable<IEntityIdentityRef> {
+-    return callService<TModel, EntityIdentity, IEntityIdentityRef>(
++    return callService<TModel, IEntityKey, IEntityIdentityRef>(
+       'deleteByKey',
+       entityInfo,
+       this.injector,
+       service => service.deleteByKey(entityInfo, key, criteria),
+-      deletedKey => ({ info: entityInfo, entityIdentity: deletedKey })
++      ensureKey(result => ({ info: entityInfo, entityIdentity: result.key, metadata: result.metadata }))
+     );
+   }
+
+   deleteManyByKey<TModel>(entityInfo: IEntityInfo, keys: EntityIdentity[], criteria?: any): Observable<IEntityIdentitiesRef> {
+-    return callService<TModel, EntityIdentity[], IEntityIdentitiesRef>(
++    return callService<TModel, IEntityKeys, IEntityIdentitiesRef>(
+       'deleteManyByKeys',
+       entityInfo,
+       this.injector,
+       service => service.deleteManyByKeys(entityInfo, keys, criteria),
+-      deletedKeys => ({ info: entityInfo, entityIdentities: deletedKeys })
++      ensureKeys(result => ({ info: entityInfo, entityIdentities: result.keys, metadata: result.metadata }))
+     );
+   }
+ }
+diff --git a/projects/ngrx-auto-entity/src/lib/service/wrapper-models.ts b/projects/ngrx-auto-entity/src/lib/service/wrapper-models.ts
+index d510090..2ae7668 100644
+--- a/projects/ngrx-auto-entity/src/lib/service/wrapper-models.ts
++++ b/projects/ngrx-auto-entity/src/lib/service/wrapper-models.ts
+@@ -1,5 +1,6 @@
+ import { IEntityInfo } from '../actions/entity-info';
+ import { IPageInfo, IRangeInfo } from '../models';
++import { EntityIdentity } from '../types/entity-identity';
+
+ export interface IEntityError {
+   info: IEntityInfo;
+@@ -7,12 +8,61 @@ export interface IEntityError {
+   err?: any;
+ }
+
++export type IEntity<TModel> = TModel | IEntityWithMetadata<TModel>;
++export type IEntities<TModel> = TModel[] | IEntitiesWithMetadata<TModel>;
++
++export interface IEntityWithMetadata<TModel> {
++  entity: TModel;
++  metadata?: any;
++}
++
++export interface IEntitiesWithMetadata<TModel> {
++  entities: TModel[];
++  metadata?: any;
++}
++
+ export interface IEntityWithPageInfo<TModel> {
+   entities: TModel[];
+   pageInfo: IPageInfo;
++  metadata?: any;
+ }
+
+ export interface IEntityWithRangeInfo<TModel> {
+   entities: TModel[];
+   rangeInfo: IRangeInfo;
++  metadata?: any;
+ }
++
++export type IEntityKey = EntityIdentity | IEntityKeyWithMetadata;
++export type IEntityKeys = EntityIdentity[] | IEntityKeysWithMetadata;
++
++export interface IEntityKeyWithMetadata {
++  key: EntityIdentity;
++  metadata?: any;
++}
++
++export interface IEntityKeysWithMetadata {
++  keys: EntityIdentity[];
++  metadata?: any;
++}
++
++export const ensureEntity = <TModel, TResult>
++  (toResult: (result: IEntityWithMetadata<TModel>) => TResult) =>
++  (result: IEntity<TModel>): TResult =>
++    toResult(typeof result === 'object' && 'entity' in result ? result : { entity: result });
++
++export const ensureEntities = <TModel, TResult>
++  (toResult: (result: IEntitiesWithMetadata<TModel>) => TResult) =>
++  (result: IEntities<TModel>): TResult =>
++    toResult(typeof result === 'object' && 'entities' in result ? result : { entities: result });
++
++export const ensureKey = <TResult>
++  (toResult: (result: IEntityKeyWithMetadata) => TResult) =>
++  (result: IEntityKey): TResult =>
++    toResult(typeof result === 'object' && 'key' in result ? result : { key: result });
++
++export const ensureKeys = <TResult>
++  (toResult: (result: IEntityKeysWithMetadata) => TResult) =>
++  (result: IEntityKeys): TResult =>
++    // @ts-ignore
++    toResult(typeof result === 'object' && 'keys' in result ? result : { keys: result });

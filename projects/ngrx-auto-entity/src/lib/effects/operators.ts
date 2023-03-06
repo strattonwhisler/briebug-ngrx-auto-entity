@@ -106,7 +106,7 @@ export class EntityOperators {
         shouldApplyEffect(),
         mergeMap(({ info, criteria, correlationId }) => {
           return this.entityService.loadAll(info, criteria).pipe(
-            map((ref: IEntityRef<TModel[]>) => new LoadAllSuccess<TModel>(ref.info.modelType, ref.entity, criteria, correlationId)),
+            map((ref: IEntityRef<TModel[]>) => new LoadAllSuccess<TModel>(ref.info.modelType, ref.entity, criteria, correlationId, ref.metadata)),
             catchError((error: IEntityError) =>
               handleError(error, new LoadAllFailure<TModel>(error.info.modelType, error.err, criteria, correlationId), 'loadAll')
             )
@@ -141,7 +141,7 @@ export class EntityOperators {
           return this.entityService.loadRange(info, range, criteria).pipe(
             map(
               (ref: IEntityRangeRef<TModel>) =>
-                new LoadRangeSuccess<TModel>(ref.info.modelType, ref.entity, ref.rangeInfo, criteria, correlationId)
+                new LoadRangeSuccess<TModel>(ref.info.modelType, ref.entity, ref.rangeInfo, criteria, correlationId, ref.metadata)
             ),
             catchError((error: IEntityError) =>
               handleError(error, new LoadRangeFailure<TModel>(error.info.modelType, error.err, range, criteria, correlationId), 'loadRange')

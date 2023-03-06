@@ -5,10 +5,11 @@ import { filter, mergeMap, tap } from 'rxjs/operators';
 import { compose as fpipe } from '../../util/func';
 import { IEntityInfo } from '../actions/entity-info';
 import { entityStateName } from '../decorators/entity-util';
-import { Page, Range } from '../models';
+import { Domain, DomainInfo, mapPageToDomain, mapRangeToDomain, Page, Range } from '../models';
 import { EntityIdentity } from '../types/entity-identity';
 import { IEntityState } from '../util/entity-state';
 import { FEATURE_AFFINITY } from '../util/util-tokens';
+import { containsDomain } from '../reducer/domain-reduction.utils';
 
 export const NGRX_AUTO_ENTITY_APP_STORE = new InjectionToken('@briebug/ngrx-auto-entity App Store');
 
@@ -21,7 +22,10 @@ export const getIsLoading = (state: IEntityState<any>): boolean => !!state.track
 export const getCurrentPage = (state: IEntityState<any>): Page | undefined => state.paging?.currentPage ?? undefined;
 export const getCurrentRange = (state: IEntityState<any>): Range | undefined => state.paging?.currentRange ?? undefined;
 export const getEntityIds = (state: IEntityState<any>): EntityIdentity[] =>  state?.ids ?? [];
+export const getDomains = (state: IEntityState<any>): DomainInfo[] => state.paging?.domains ?? [];
 export const mapToHasEntities = (ids?: EntityIdentity[]): boolean => !!ids && !!ids.length;
+export const mapToHasDomain = (domain: Domain) => (domains: DomainInfo[]): boolean =>
+  domains.some((info) => containsDomain(info.domain, domain));
 
 export const entityLoadedAt = (info: IEntityInfo) => fpipe(getEntityState(info), getLoadedAt);
 export const entityIsLoading = (info: IEntityInfo) => fpipe(getEntityState(info), getIsLoading);
@@ -29,6 +33,9 @@ export const entityCurrentPage = (info: IEntityInfo) => fpipe(getEntityState(inf
 export const entityCurrentRange = (info: IEntityInfo) => fpipe(getEntityState(info), getCurrentRange);
 export const entityIds = (info: IEntityInfo) => fpipe(getEntityState(info), getEntityIds);
 export const hasEntitiesLoaded = (info: IEntityInfo) => fpipe(getEntityState(info), getEntityIds, mapToHasEntities);
+export const hasDomainLoaded = (info: IEntityInfo, domain: Domain) => fpipe(getEntityState(info), getDomains, mapToHasDomain(domain));
+export const hasPageLoaded = (info: IEntityInfo, page: Page) => hasDomainLoaded(info, mapPageToDomain(page));
+export const hasRangeLoaded = (info: IEntityInfo, range: Range) => hasDomainLoaded(info, mapRangeToDomain(range));
 export const addSeconds = (date: Date, seconds: number): Date =>
   new Date(
     date.getFullYear(),
@@ -40,7 +47,6 @@ export const addSeconds = (date: Date, seconds: number): Date =>
     date.getMilliseconds()
   );
 export const nowAfterExpiry = (expiry: Date): boolean => expiry < new Date();
-export const isSubsequentRange = (a: any, b: any) => (a.start || a.first || a.skip + a.take) > (b.end || b.last || b.skip + b.take);
 
 export const warnIfMissingStore: (() => void) & { lastWarnTime?: number } = () =>
   !warnIfMissingStore.lastWarnTime || Math.abs(new Date(warnIfMissingStore.lastWarnTime).valueOf() - new Date(Date.now()).valueOf()) > 15000

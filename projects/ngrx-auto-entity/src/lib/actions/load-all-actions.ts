@@ -47,7 +47,7 @@ export class LoadAll<TModel> extends EntityAction<TModel> {
  * @param correlationId - (optional) The correlationId for this action; correlates to initial load all action
  */
 export class LoadAllSuccess<TModel> extends EntityAction<TModel> {
-  constructor(type: new () => TModel, public entities: TModel[], public criteria?: any, correlationId?: string) {
+  constructor(type: new () => TModel, public entities: TModel[], public criteria?: any, correlationId?: string, public metadata?: any) {
     super(type, EntityActionTypes.LoadAllSuccess, correlationId);
   }
 }
