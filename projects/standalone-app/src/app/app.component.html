@@ -1,0 +1,28 @@
+<a routerLink="/feature">Load Feature</a>
+
+<div class="d-flex justify-content-around">
+  <div>
+    <h1>Customers</h1>
+
+    <button (click)="editByKey(1)">Edit</button>
+    <button (click)="endEdit()">End Edit</button>
+
+    <ul>
+      @for (customer of allCustomers$ | async; track byId) {
+        <li>{{customer.name}}</li>
+      }
+    </ul>
+  </div>
+  <div>
+    <h1>Accounts</h1>
+
+    <ul>
+      @for (account of allAccounts$ | async; track byId) {
+        <li>{{account.name}}</li>
+      }
+    </ul>
+  </div>
+  <div>
+    <router-outlet></router-outlet>
+  </div>
+</div>
