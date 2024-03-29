@@ -36,8 +36,10 @@
   "scripts": {
     "nx": "nx",
     "start": "concurrently --prefix-colors white.bgBlue,white.bgRed --names angular,json-server --kill-others \"npm run serve\" \"npm run json-server\"",
-    "serve": "nx run test-app:serve --proxy-config proxy.conf.json",
-    "serve:prod": "nx run test-app:serve:production --proxy-config proxy.conf.json",
+    "start:standalone": "concurrently --prefix-colors white.bgBlue,white.bgRed --names angular,json-server --kill-others \"npm run serve:standalone\" \"npm run json-server\"",
+    "serve": "nx run test-app:serve",
+    "serve:standalone": "nx run standalone-app:serve",
+    "serve:prod": "nx run test-app:serve:production",
     "build": "nx run-many --target build",
     "build:app": "nx run test-app:build:production",
     "build:app:watch": "nx run test-app:build:production --watch",

@@ -1,0 +1,20 @@
+<table>
+  <thead>
+    <tr>
+      <th>Active</th>
+      <th>Name</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let customer of customers; trackBy trackById">
+      <td>
+        <input type="checkbox" [checked]="customer.isActive" disabled>
+      </td>
+      <td>{{customer.name}}</td>
+      <td>
+        <button type="button" (click)="view.emit(customer.id)">View</button>
+      </td>
+    </tr>
+  </tbody>
+</table>

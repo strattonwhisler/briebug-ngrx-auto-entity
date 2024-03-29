@@ -10,26 +10,22 @@
     ></app-customer-table>
   </div>
   <div>
-   <ng-container
-    *ngIf="customers.current$ | async as customer"
-   >
+    @if (customers.current$ | async; as customer) {
       <div>
         <h1>Customer</h1>
 
-<!--        <app-edit-customer/>-->
+        <app-edit-customer/>
       </div>
       <div>
         <h2>Accounts</h2>
 
-<!--        <app-account-table-->
-<!--          [accounts]="accounts.currentForCurrentCustomer$ | async"-->
-<!--        ></app-account-table>-->
+        <app-account-table
+          [accounts]="accounts.currentForCurrentCustomer$ | async"
+        ></app-account-table>
       </div>
-   </ng-container>
-
-    <ng-template #noSelection>
+    } @else {
       <p>No Customer is selected</p>
-    </ng-template>
+    }
   </div>
   <div>
     <router-outlet></router-outlet>
