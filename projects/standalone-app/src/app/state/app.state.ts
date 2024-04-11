@@ -1,6 +1,6 @@
-import { importProvidersFrom, makeEnvironmentProviders } from '@angular/core';
+import { importProvidersFrom, inject, makeEnvironmentProviders } from '@angular/core';
 import { IEntityState, NGRX_AUTO_ENTITY_APP_STORE, NgrxAutoEntityModule } from '@briebug/ngrx-auto-entity';
-import { EntityService, NgrxAutoEntityServiceModule } from '@briebug/ngrx-auto-entity-service';
+import { EntityService, provideAutoEntityService } from '@briebug/ngrx-auto-entity-service';
 import { provideEffects } from '@ngrx/effects';
 import { provideRouterStore, RouterStateSerializer } from '@ngrx/router-store';
 import { ActionReducerMap, MetaReducer, provideStore, Store } from '@ngrx/store';
@@ -46,14 +46,15 @@ export function provideAppState() {
     }),
     provideRouterStore(),
     provideEffects(),
+    // provideAutoEntityStore(),
+    provideAutoEntityService(() => {
+      const configService = inject(ConfigService);
+      return {
+        urlPrefix: (...args) => configService.apiBaseUrl
+      }
+    }),
     importProvidersFrom(
       NgrxAutoEntityModule.forRoot(),
-      NgrxAutoEntityServiceModule.forRoot(
-        (configService: ConfigService) => ({
-          urlPrefix: (...args) => configService.url
-        }),
-        [ConfigService]
-      )
     ),
     { provide: Customer, useExisting: EntityService },
     { provide: Account, useExisting: EntityService },
