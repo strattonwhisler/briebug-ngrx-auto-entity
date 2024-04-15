@@ -1,5 +1,5 @@
-import { importProvidersFrom, makeEnvironmentProviders } from '@angular/core';
-import { NgrxAutoEntityModule } from '@briebug/ngrx-auto-entity';
+import { makeEnvironmentProviders } from '@angular/core';
+import { provideAutoEntityState, withEntityService } from '@briebug/ngrx-auto-entity';
 import { EntityService } from '@briebug/ngrx-auto-entity-service';
 import { ActionReducerMap, combineReducers, createFeature, provideState } from '@ngrx/store';
 
@@ -24,10 +24,9 @@ export const featureState = createFeature({
 export function provideFeatureState() {
   return makeEnvironmentProviders([
     provideState(featureState),
-    importProvidersFrom(
-      NgrxAutoEntityModule.forFeature()
-    ),
-    { provide: Product, useExisting: EntityService }
+    provideAutoEntityState(
+      withEntityService(Product, EntityService)
+    )
   ]);
 }
 
