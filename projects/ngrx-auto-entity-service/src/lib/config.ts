@@ -49,4 +49,4 @@ export interface AutoEntityServiceConfig {
 }
 
 
-export const AUTO_ENTITY_CONFIG = new InjectionToken<AutoEntityServiceConfig>('auto-entity-config')
+export const AUTO_ENTITY_CONFIG = new InjectionToken<AutoEntityServiceConfig>('@briebug/ngrx-auto-entity-service Config')
