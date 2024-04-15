@@ -12,8 +12,21 @@ export {
   NgRxAutoEntityRootModuleNoEffects,
   NgRxAutoEntityFeatureModule,
   NgRxAutoEntityModuleConfig,
-  getNgRxAutoEntityMetaReducer
 } from './lib/module';
+export {
+  AppStoreFactory,
+  AppStoreFeature,
+  EntityServiceFeature,
+  getNgRxAutoEntityMetaReducer,
+  NGRX_AUTO_ENTITY_CONFIG,
+  NgRxAutoEntityConfig,
+  NgRxAutoEntityFeatures,
+  NgRxAutoEntityStateFeatures,
+  provideAutoEntityState,
+  provideAutoEntityStore,
+  withAppStore,
+  withEntityService,
+} from './lib/provider';
 
 /*
  * Injection Tokens
