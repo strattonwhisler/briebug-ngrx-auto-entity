@@ -13,6 +13,7 @@ import { Account } from '../models/account.model';
 import { CUSTOMER_STATE_NAME, customerReducer, ICustomerState } from './customer.state';
 import { ACCOUNT_STATE_NAME, accountReducer } from './account.state';
 import { environment } from '../../environments/environment';
+import { MyEntityService } from '../services/my-entity.service';
 
 
 export interface IAppState {
@@ -45,7 +46,7 @@ export function provideAppState() {
     provideAutoEntityStore(
       withAppStore(() => inject(Store)),
       withEntityService(Customer, EntityService),
-      withEntityService(Account, EntityService),
+      withEntityService(Account, MyEntityService),
     ),
     provideAutoEntityService(() => {
       const configService = inject(ConfigService);

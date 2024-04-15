@@ -4,23 +4,99 @@
   <div>
     <h1>Customers</h1>
 
-    <button (click)="editByKey(1)">Edit</button>
-    <button (click)="endEdit()">End Edit</button>
-
-    <ul>
-      @for (customer of allCustomers$ | async; track byId) {
-        <li>{{customer.name}}</li>
-      }
-    </ul>
+    <app-customer-table
+      [customers]="customers.all$ | async"
+      (view)="customers.selectByKey($event)"
+    ></app-customer-table>
   </div>
   <div>
-    <h1>Accounts</h1>
+    @if (customers.current$ | async; as customer) {
+      <div>
+        <h1>Customer</h1>
 
-    <ul>
-      @for (account of allAccounts$ | async; track byId) {
-        <li>{{account.name}}</li>
-      }
-    </ul>
+        @if ((customers.edited$ | async) != null) {
+          <form [formGroup]="customerForm" (ngSubmit)="customers.endEdit()">
+            <button type="submit">Save</button>
+            <button type="button" (click)="customers.endEdit()">Cancel</button>
+
+            <div class="form-group">
+              <label for="isActive">Is Active</label>
+              <input type="text" id="isActive" formControlName="catchPhrase">
+            </div>
+            <div class="form-group">
+              <label for="name">Name</label>
+              <input type="text" id="name" formControlName="name">
+            </div>
+            <div class="form-group">
+              <label for="catchPhrase">Catch Phrase</label>
+              <input type="text" id="catchPhrase" formControlName="catchPhrase">
+            </div>
+            <div style="display: grid; grid: 1fr 1fr / 1fr 1fr 1fr;" formGroupName="address">
+              <div class="form-group" style="grid-column: 1 / span 3;">
+                <label for="address-street1">Street 1</label>
+                <input type="text" id="address-street1" formControlName="street1">
+              </div>
+              <div class="form-group">
+                <label for="address-city">City</label>
+                <input type="text" id="address-city" formControlName="city">
+              </div>
+              <div class="form-group">
+                <label for="address-state">State</label>
+                <input type="text" id="address-state" formControlName="state">
+              </div>
+              <div class="form-group">
+                <label for="address-zip">Zip</label>
+                <input type="text" id="address-zip" formControlName="zip">
+              </div>
+            </div>
+          </form>
+        } @else {
+          <div>
+            <button (click)="customers.edit(customer); customerForm.reset(customer)">Edit</button>
+
+            <div class="form-group">
+              <label for="isActive">Is Active</label>
+              <span id="isActive">{{customer.catchPhrase}}</span>
+            </div>
+            <div class="form-group">
+              <label for="name">Name</label>
+              <span id="name">{{customer.name}}</span>
+            </div>
+            <div class="form-group">
+              <label for="catchPhrase">Catch Phrase</label>
+              <span id="catchPhrase">{{customer.catchPhrase}}</span>
+            </div>
+            <div style="display: grid; grid: 1fr 1fr / 1fr 1fr 1fr;">
+              <div class="form-group" style="grid-column: 1 / span 3;">
+                <label for="address-street1">Street 1</label>
+                <span id="address-street1">{{customer.address.street1}}</span>
+              </div>
+              <div class="form-group">
+                <label for="address-city">City</label>
+                <span id="address-city">{{customer.address.city}}</span>
+              </div>
+              <div class="form-group">
+                <label for="address-state">State</label>
+                <span id="address-state">{{customer.address.state}}</span>
+              </div>
+              <div class="form-group">
+                <label for="address-zip">Zip</label>
+                <span id="address-zip">{{customer.address.zip}}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+      <div>
+        <h2>Accounts</h2>
+
+        <app-account-table
+          [accounts]="accounts.currentForCurrentCustomer$ | async"
+        ></app-account-table>
+      </div>
+    } @else {
+      <p>No Customer is selected</p>
+    }
   </div>
   <div>
     <router-outlet></router-outlet>

@@ -10,4 +10,10 @@ export class Customer {
   name: string;
   catchPhrase: string;
   isActive: boolean;
+  address: {
+    street1: string;
+    city: string;
+    state: string;
+    zip: string;
+  };
 }

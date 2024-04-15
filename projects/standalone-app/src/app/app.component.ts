@@ -2,25 +2,54 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { AsyncPipe, NgForOf } from '@angular/common';
 import { Store } from '@ngrx/store';
-import { allAccounts, manyAccountsLoading } from './state/account.state';
-import { allCustomers, customerEditedById, customerEditEnded, manyCustomersLoadingIfNecessary } from './state/customer.state';
-import { trackById } from './app.utils';
+import { manyAccountsLoading } from './state/account.state';
+import { customerEditedById, customerEditEnded, manyCustomersLoadingIfNecessary } from './state/customer.state';
+import { CustomerTableComponent } from './customers/customer-table.component';
+import { CustomerFacade } from './state/customer.facade';
+import { AccountFacade } from './state/account.facade';
+import { AccountTableComponent } from './accounts/account-table';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Customer } from './models/customer.model';
 
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, AsyncPipe, NgForOf, RouterLink],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  imports: [RouterOutlet, AsyncPipe, NgForOf, RouterLink, CustomerTableComponent, AccountTableComponent, ReactiveFormsModule],
+  templateUrl: './app.component.html'
 })
 export class AppComponent {
-  protected readonly byId = trackById;
+  protected readonly customers = inject(CustomerFacade);
+  protected readonly accounts = inject(AccountFacade);
 
   protected readonly store = inject(Store);
 
-  allCustomers$ = this.store.select(allCustomers);
-  allAccounts$ = this.store.select(allAccounts);
+  protected fb = inject(FormBuilder);
+
+  // protected customerForm = new FormGroup({
+  //   isActive: new FormControl(true, { nonNullable: true }),
+  //   name: new FormControl('', { nonNullable: true }),
+  //   catchPhrase: new FormControl('', { nonNullable: true }),
+  //   address: new FormGroup({
+  //     street1: new FormControl('', { nonNullable: true }),
+  //     city: new FormControl('', { nonNullable: true }),
+  //     state: new FormControl('', { nonNullable: true }),
+  //     zip: new FormControl('', { nonNullable: true })
+  //   })
+  // });
+
+  protected customerForm = this.fb.nonNullable.group({
+    isActive: [true],
+    name: [''],
+    catchPhrase: [''],
+    address: this.fb.nonNullable.group({
+      street1: [''],
+      city: [''],
+      state: [''],
+      zip: ['']
+    })
+  });
 
   constructor() {
     // accounts.loadAll();
@@ -29,6 +58,10 @@ export class AppComponent {
     this.store.dispatch(manyAccountsLoading());
     this.store.dispatch(manyCustomersLoadingIfNecessary());
     setTimeout(() => this.store.dispatch(manyCustomersLoadingIfNecessary()), 2000);
+
+    this.customerForm.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(changes => this.customers.change(changes as Customer));
 
     // setTimeout(() => customers.clear(), 3000);
     //

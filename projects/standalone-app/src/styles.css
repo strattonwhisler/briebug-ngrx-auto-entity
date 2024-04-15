@@ -11,3 +11,15 @@
 .justify-content-around {
   justify-content: space-around;
 }
+
+.form-group {
+  margin: 0.5rem 0;
+}
+
+.form-group > * {
+  display: block;
+}
+
+.form-group label {
+  font-size: 10pt;
+}
