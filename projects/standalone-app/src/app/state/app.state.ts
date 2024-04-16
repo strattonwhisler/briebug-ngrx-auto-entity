@@ -1,5 +1,5 @@
 import { inject, makeEnvironmentProviders } from '@angular/core';
-import { IEntityState, provideAutoEntityStore, withAppStore, withEntityService } from '@briebug/ngrx-auto-entity';
+import { IEntityState, provideAutoEntityStore, provideEntityService } from '@briebug/ngrx-auto-entity';
 import { EntityService, provideAutoEntityService } from '@briebug/ngrx-auto-entity-service';
 import { provideEffects } from '@ngrx/effects';
 import { provideRouterStore, RouterStateSerializer } from '@ngrx/router-store';
@@ -43,17 +43,15 @@ export function provideAppState() {
     }),
     provideRouterStore(),
     provideEffects(),
-    provideAutoEntityStore(
-      withAppStore(() => inject(Store)),
-      withEntityService(Customer, EntityService),
-      withEntityService(Account, MyEntityService),
-    ),
+    provideAutoEntityStore(),
     provideAutoEntityService(() => {
       const configService = inject(ConfigService);
       return {
         urlPrefix: (...args) => configService.apiBaseUrl
       }
     }),
+    provideEntityService(Customer, EntityService),
+    provideEntityService(Account, MyEntityService),
     { provide: RouterStateSerializer, useClass: CustomRouterStateSerializer }
   ]);
 }
