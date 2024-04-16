@@ -4,6 +4,6 @@ export const routes: Routes = [
   {
     path: 'feature',
     loadChildren: () =>
-      import('./lazy/feature.routes').then((m) => m.routes),
+      import('./+feature/feature.routes').then((m) => m.routes),
   },
 ];

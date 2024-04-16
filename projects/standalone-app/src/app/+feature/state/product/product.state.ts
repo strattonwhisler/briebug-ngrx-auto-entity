@@ -1,8 +1,8 @@
 import { buildFeatureState, IEntityState } from '@briebug/ngrx-auto-entity';
 import { Action, createReducer } from '@ngrx/store';
-import { Product } from '../models/product.model';
-import { selectFeatureState } from './feature.selector';
-import { FEATURE_STATE_NAME } from './feature.state-name';
+import { Product } from '../../models/product.model';
+import { selectFeatureState } from '../feature.selector';
+import { FEATURE_STATE_NAME } from '../feature.state-name';
 
 export const PRODUCT_STATE_NAME = 'product';
 
@@ -11,6 +11,7 @@ export interface IProductState extends IEntityState<Product> {
 
 export const {
   initialState,
+  facade: ProductFacadeBase,
   selectors: { selectAllSorted: allProducts },
   actions: {
     loadMany: manyProductsLoading,

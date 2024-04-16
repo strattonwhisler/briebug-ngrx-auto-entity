@@ -3,7 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { AsyncPipe, NgForOf } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { trackById } from '../app.utils';
-import { allProducts, manyProductsLoadingIfNecessary, productEditedById, productEditEnded } from './state/product.state';
+import { allProducts, manyProductsLoadingIfNecessary, productEditedById, productEditEnded } from './state/product/product.state';
 
 @Component({
   selector: 'app-root',

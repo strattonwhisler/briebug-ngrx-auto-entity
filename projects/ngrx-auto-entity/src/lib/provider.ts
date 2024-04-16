@@ -177,7 +177,7 @@ export function addNgRxAutoEntityInjector() {
 
   // Update the core NgRxAutoEntityService INJECTORS to include the current injector
   // This creates a list of injectors that should eventually encompass the entire application
-  // as lazy loaded modules are subsequently created, to be evaluated in reverse order
+  // as +feature loaded modules are subsequently created, to be evaluated in reverse order
   INJECTOR_DEPTH = INJECTOR_DEPTH + 1;
   addInjector(
     Injector.create({

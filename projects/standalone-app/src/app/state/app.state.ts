@@ -1,23 +1,19 @@
 import { inject, makeEnvironmentProviders } from '@angular/core';
-import { IEntityState, provideAutoEntityStore, provideEntityService } from '@briebug/ngrx-auto-entity';
-import { EntityService, provideAutoEntityService } from '@briebug/ngrx-auto-entity-service';
+import { provideAutoEntityStore } from '@briebug/ngrx-auto-entity';
+import { provideAutoEntityService } from '@briebug/ngrx-auto-entity-service';
 import { provideEffects } from '@ngrx/effects';
 import { provideRouterStore, RouterStateSerializer } from '@ngrx/router-store';
-import { ActionReducerMap, MetaReducer, provideStore, Store } from '@ngrx/store';
+import { ActionReducerMap, MetaReducer, provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 
 import { CustomRouterStateSerializer } from './shared/utils';
 import { ConfigService } from '../services/config.service';
-import { Customer } from '../models/customer.model';
-import { Account } from '../models/account.model';
-import { CUSTOMER_STATE_NAME, customerReducer, ICustomerState } from './customer.state';
-import { ACCOUNT_STATE_NAME, accountReducer } from './account.state';
+import { CUSTOMER_STATE_NAME, customerReducer, ICustomerState, provideCustomerState } from './customer';
+import { ACCOUNT_STATE_NAME, accountReducer, IAccountState, provideAccountState } from './account';
 import { environment } from '../../environments/environment';
-import { MyEntityService } from '../services/my-entity.service';
-
 
 export interface IAppState {
-  [ACCOUNT_STATE_NAME]: IEntityState<Account>;
+  [ACCOUNT_STATE_NAME]: IAccountState;
   [CUSTOMER_STATE_NAME]: ICustomerState;
 }
 
@@ -50,8 +46,8 @@ export function provideAppState() {
         urlPrefix: (...args) => configService.apiBaseUrl
       }
     }),
-    provideEntityService(Customer, EntityService),
-    provideEntityService(Account, MyEntityService),
+    provideAccountState(),
+    provideCustomerState(),
     { provide: RouterStateSerializer, useClass: CustomRouterStateSerializer }
   ]);
 }

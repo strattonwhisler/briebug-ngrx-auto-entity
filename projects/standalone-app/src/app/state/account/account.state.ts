@@ -1,9 +1,12 @@
 import { buildState, IEntityState } from '@briebug/ngrx-auto-entity';
 import { Action, createSelector } from '@ngrx/store';
-import { Account } from '../models/account.model';
-import { currentCustomerId } from './customer.state';
+import { Account } from '../../models/account.model';
+import { currentCustomerId } from '../customer';
 
 export const ACCOUNT_STATE_NAME = 'account';
+
+export interface IAccountState extends IEntityState<Account> {
+}
 
 export const {
   initialState,
