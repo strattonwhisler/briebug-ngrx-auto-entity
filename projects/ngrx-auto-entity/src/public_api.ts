@@ -14,18 +14,16 @@ export {
   NgRxAutoEntityModuleConfig,
 } from './lib/module';
 export {
-  AppStoreFactory,
-  AppStoreFeature,
-  EntityServiceFeature,
+  CustomStoreFactory,
+  CustomStoreFeature,
   getNgRxAutoEntityMetaReducer,
   NGRX_AUTO_ENTITY_CONFIG,
   NgRxAutoEntityConfig,
   NgRxAutoEntityFeatures,
-  NgRxAutoEntityStateFeatures,
   provideAutoEntityState,
   provideAutoEntityStore,
-  withAppStore,
-  withEntityService,
+  provideEntityService,
+  withCustomStore,
 } from './lib/provider';
 
 /*

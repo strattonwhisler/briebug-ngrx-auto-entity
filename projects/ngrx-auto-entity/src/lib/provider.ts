@@ -29,6 +29,10 @@ function isAutoEntityFeature <FeatureKind extends NgRxAutoEntityFeatureKind>(val
   return value && value.ɵkind != null && value.ɵproviders != null;
 }
 
+function includesFeature <FeatureKind extends NgRxAutoEntityFeatureKind>(features: NgRxAutoEntityFeatures[], featureKind: FeatureKind): boolean {
+  return features.some(feature => feature.ɵkind === featureKind);
+}
+
 function autoEntityFeature<FeatureKind extends NgRxAutoEntityFeatureKind>(
   kind: FeatureKind,
   providers: Provider[],
@@ -77,21 +81,35 @@ export function addNgRxAutoEntityEffects(): () => void {
   };
 }
 
+/** @internal */
 export function _provideAutoEntityStore(
   config: NgRxAutoEntityConfig = defaultConfig,
   features: NgRxAutoEntityFeatures[] = []
 ): Provider[] {
+  const effects = [];
+
+  if (!config.withNoEntityEffects) {
+    effects.push(EntityEffects);
+  }
+
+  if (!config.withNoExtraEffects) {
+    effects.push(ExtraEffects);
+  }
+
+  if (!includesFeature(features, NgRxAutoEntityFeatureKind.CustomStoreFeature)) {
+    features.push(withCustomStore(() => inject(Store)));
+  }
+
   return [
     NgrxAutoEntityService,
     EntityOperators,
     EntityIfNecessaryOperators,
-    config.withNoEntityEffects ? [] : EntityEffects,
-    config.withNoExtraEffects ? [] : ExtraEffects,
+    ...effects,
     { provide: META_REDUCERS, useFactory: getNgRxAutoEntityMetaReducer, multi: true },
     { provide: NGRX_AUTO_ENTITY_CONFIG, useValue: config },
     { provide: ENVIRONMENT_INITIALIZER, useFactory: addNgRxAutoEntityEffects, multi: true },
     ...features.map((feature) => feature.ɵproviders),
-  ].flat();
+  ];
 }
 
 export function provideAutoEntityStore(config: NgRxAutoEntityConfig, ...features: NgRxAutoEntityFeatures[]): EnvironmentProviders;
@@ -107,13 +125,12 @@ export function provideAutoEntityStore(...features: NgRxAutoEntityFeatures[]): E
  * ```
  * bootstrapApplication(AppComponent, {
  *   providers: [
- *     provideAutoEntityStore(
- *       withEntityService(Customer, CustomerService)
- *     ),
+ *     provideAutoEntityStore(),
  *   ]
  * })
  * ```
  *
+ * @publicApi
  * @param args
  * @returns A set of providers to set up the Auto-Entity Store.
  */
@@ -147,14 +164,14 @@ export function addNgRxAutoEntityInjector() {
   );
 }
 
-export function _provideAutoEntityState(features: NgRxAutoEntityStateFeatures[] = []): Provider[] {
+/** @internal */
+export function _provideAutoEntityState(): Provider[] {
   return [
     {
       provide: ENVIRONMENT_INITIALIZER,
       multi: true,
       useValue: addNgRxAutoEntityInjector
-    },
-    ...features.map((feature) => feature.ɵproviders),
+    }
   ];
 }
 
@@ -173,76 +190,83 @@ export function _provideAutoEntityState(features: NgRxAutoEntityStateFeatures[] 
  *     component: ProductsPageComponent,
  *     providers: [
  *       provideState(featureState),
- *       provideAutoEntityState(
- *         withEntityService(Products, ProductsService)
- *       )
+ *       provideAutoEntityState()
  *     ]
  *   }
  * ];
- *
- * bootstrapApplication(AppComponent, {
- *   providers: [
- *     provideStore(appReducer),
- *     provideEffects(),
- *     provideAutoEntityStore(
- *       withAppStore(() => inject(Store))
- *     )
- *   ]
- * })
  * ```
  *
+ * @publicApi
  * @param features List of Auto-Entity Features to include.
  * @returns A set of providers to set up an Auto-Entity Feature State.
  */
-export function provideAutoEntityState(...features: NgRxAutoEntityStateFeatures[]): EnvironmentProviders {
+export function provideAutoEntityState(): EnvironmentProviders {
   return makeEnvironmentProviders(
-    _provideAutoEntityState(features)
+    _provideAutoEntityState()
   );
 }
-
-export type AppStoreFeature = NgRxAutoEntityFeature<NgRxAutoEntityFeatureKind.AppStoreFeature>
-
-export type AppStoreFactory = (...deps: any[]) => Store<any>;
-
-export function withAppStore(getAppStore: AppStoreFactory, deps?: any[]): AppStoreFeature {
-  const providers = [
-    { provide: NGRX_AUTO_ENTITY_APP_STORE, useFactory: getAppStore, deps },
-  ];
-  return autoEntityFeature(NgRxAutoEntityFeatureKind.AppStoreFeature, providers);
-}
-
-export type EntityServiceFeature = NgRxAutoEntityFeature<NgRxAutoEntityFeatureKind.EntityServiceFeature>;
 
 const PROVIDED_SERVICES: Type<any>[] = [];
 
 /**
- * Includes providers for an Entity's Service.
+ * Sets up providers for an Entity's Service.
  *
+ * This will reuse existing services when possible.
+ *
+ * @usageNotes
+ *
+ * ### Providing an Entity's Service
+ *
+ * Basic example of providing an entity's service:
+ * ```
+ * bootstrapApplication(AppComponent, {
+ *   providers: [
+ *     provideEntityService(Products, ProductsService)
+ *   ]
+ * })
+ * ```
+ *
+ * @publicApi
  * @param modelType The model to provide a service for.
  * @param service The service to provide.
  * @returns A set of providers to set up an Entity's Service.
  */
-export function withEntityService(modelType: Type<any>, service: Type<any>): EntityServiceFeature {
+export function provideEntityService(modelType: Type<any>, service: Type<any>): EnvironmentProviders {
   const providers: Provider[] = [
     { provide: modelType, useExisting: service }
   ];
 
   if (!PROVIDED_SERVICES.includes(service)) {
-    providers.push(service);
+    providers.unshift(service);
     PROVIDED_SERVICES.push(service);
   }
 
-  return autoEntityFeature(NgRxAutoEntityFeatureKind.EntityServiceFeature, providers);
+  return makeEnvironmentProviders(providers);
+}
+
+export type CustomStoreFeature = NgRxAutoEntityFeature<NgRxAutoEntityFeatureKind.CustomStoreFeature>
+
+export type CustomStoreFactory = (...deps: any[]) => Store<any>;
+
+export function withCustomStore(getStore: CustomStoreFactory, deps?: any[]): CustomStoreFeature {
+  const providers = [
+    { provide: NGRX_AUTO_ENTITY_APP_STORE, useFactory: getStore, deps },
+  ];
+  return autoEntityFeature(NgRxAutoEntityFeatureKind.CustomStoreFeature, providers);
+}
+
+/**
+ * Disables automatic providing of the Auto-Entity Store.
+ * @internal
+ */
+export function _withNoStore(): CustomStoreFeature {
+  return autoEntityFeature(NgRxAutoEntityFeatureKind.CustomStoreFeature, []);
 }
 
 export type NgRxAutoEntityFeatures =
-  | AppStoreFeature
-  | EntityServiceFeature;
+  | CustomStoreFeature;
 
-export type NgRxAutoEntityStateFeatures =
-  | EntityServiceFeature;
 
 export const enum NgRxAutoEntityFeatureKind {
-  AppStoreFeature,
-  EntityServiceFeature,
+  CustomStoreFeature,
 }
