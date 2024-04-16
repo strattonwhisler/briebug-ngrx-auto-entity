@@ -112,28 +112,52 @@ export function _provideAutoEntityStore(
   ];
 }
 
-export function provideAutoEntityStore(config: NgRxAutoEntityConfig, ...features: NgRxAutoEntityFeatures[]): EnvironmentProviders;
-export function provideAutoEntityStore(...features: NgRxAutoEntityFeatures[]): EnvironmentProviders;
 /**
- * Sets up providers for the Auto-Entity Store.
+ * Provides the global Auto-Entity providers.
  *
  * @usageNotes
  *
  * ### Providing Auto-Entity
  *
- * Basic example of providing the root Auto-Entity Store:
  * ```
  * bootstrapApplication(AppComponent, {
  *   providers: [
+ *     provideStore(appReducer)
+ *     provideAutoEntityStore({
+ *       withNoEntityEffects: true,
+ *       withNoExtraEffects: true,
+ *     }),
+ *   ]
+ * })
+ * ```
+ *
+ * @publicApi
+ * @param config The Auto-Entity configuration.
+ * @param features A list of Auto-Entity features to include.
+ * @returns A set of providers to set up the Auto-Entity global state.
+ */
+export function provideAutoEntityStore(config: NgRxAutoEntityConfig, ...features: NgRxAutoEntityFeatures[]): EnvironmentProviders;
+/**
+ * Provides the global Auto-Entity providers.
+ *
+ * @usageNotes
+ *
+ * ### Providing Auto-Entity
+ *
+ * ```
+ * bootstrapApplication(AppComponent, {
+ *   providers: [
+ *     provideStore(appReducer)
  *     provideAutoEntityStore(),
  *   ]
  * })
  * ```
  *
  * @publicApi
- * @param args
- * @returns A set of providers to set up the Auto-Entity Store.
+ * @param features A list of Auto-Entity features to include.
+ * @returns A set of providers to set up the Auto-Entity global state.
  */
+export function provideAutoEntityStore(...features: NgRxAutoEntityFeatures[]): EnvironmentProviders;
 export function provideAutoEntityStore(...args: (NgRxAutoEntityConfig | NgRxAutoEntityFeatures)[]): EnvironmentProviders {
   const config = isAutoEntityFeature(args[0]) ? undefined : args.shift() as NgRxAutoEntityConfig;
   const features = args as NgRxAutoEntityFeatures[];
@@ -176,29 +200,19 @@ export function _provideAutoEntityState(): Provider[] {
 }
 
 /**
- * Sets up providers for an Auto-Entity Feature State.
+ * Provides the feature level Auto-Entity providers.
  *
  * @usageNotes
  *
  * ### Providing an Auto-Entity Feature State
  *
- * Basic example of providing an Auto-Entity Feature State:
  * ```
- * export const routes: Routes = [
- *   {
- *     path: '',
- *     component: ProductsPageComponent,
- *     providers: [
- *       provideState(featureState),
- *       provideAutoEntityState()
- *     ]
- *   }
- * ];
+ * provideState(featureState),
+ * provideAutoEntityState()
  * ```
  *
  * @publicApi
- * @param features List of Auto-Entity Features to include.
- * @returns A set of providers to set up an Auto-Entity Feature State.
+ * @returns A set of providers to set up an Auto-Entity feature state.
  */
 export function provideAutoEntityState(): EnvironmentProviders {
   return makeEnvironmentProviders(
@@ -209,7 +223,7 @@ export function provideAutoEntityState(): EnvironmentProviders {
 const PROVIDED_SERVICES: Type<any>[] = [];
 
 /**
- * Sets up providers for an Entity's Service.
+ * Provides an entity's service.
  *
  * This will reuse existing services when possible.
  *
@@ -217,19 +231,14 @@ const PROVIDED_SERVICES: Type<any>[] = [];
  *
  * ### Providing an Entity's Service
  *
- * Basic example of providing an entity's service:
  * ```
- * bootstrapApplication(AppComponent, {
- *   providers: [
- *     provideEntityService(Products, ProductsService)
- *   ]
- * })
+ * provideEntityService(Products, ProductsService)
  * ```
  *
  * @publicApi
- * @param modelType The model to provide a service for.
+ * @param modelType The entity model to provide a service for.
  * @param service The service to provide.
- * @returns A set of providers to set up an Entity's Service.
+ * @returns A set of providers to set up an entity's service.
  */
 export function provideEntityService(modelType: Type<any>, service: Type<any>): EnvironmentProviders {
   const providers: Provider[] = [
