@@ -3,6 +3,14 @@ import { HttpClientModule } from '@angular/common/http';
 import { AUTO_ENTITY_CONFIG, AutoEntityServiceConfig, DynamicAutoEntityServiceConfig } from './config';
 import { EntityService } from './entity.service';
 
+/** @internal */
+export function _provideAutoEntityService(config: AutoEntityServiceConfig | DynamicAutoEntityServiceConfig, deps?: any[]): Provider[] {
+  return [
+    EntityService,
+    createConfigProvider(config, deps)
+  ];
+}
+
 /**
  * Sets up providers for the auto-entity entity service.
  *
@@ -14,9 +22,7 @@ import { EntityService } from './entity.service';
  * ```
  * bootstrapApplication(AppComponent, {
  *   providers: [
- *     provideAutoEntityStore(
- *       withEntityService(Customer, EntityService)
- *     ),
+ *     // …
  *     provideAutoEntityService({
  *       urlPrefix: 'https://example.com/api'
  *     }),
@@ -24,13 +30,13 @@ import { EntityService } from './entity.service';
  * });
  * ```
  *
+ * ### Dynamic configuration
+ *
  * You can also provide the Auto-Entity Entity Service configuration dynamically:
  * ```
  * bootstrapApplication(AppComponent, {
  *   providers: [
- *     provideAutoEntityStore(
- *       withEntityService(Customer, EntityService)
- *     ),
+ *     // …
  *     provideAutoEntityService(() => {
  *       const configService = inject(ConfigService);
  *       return {
@@ -61,10 +67,3 @@ const createConfigProvider = (config: AutoEntityServiceConfig | DynamicAutoEntit
       deps
     }
     : { provide: AUTO_ENTITY_CONFIG, useValue: config };
-
-export function _provideAutoEntityService(config: AutoEntityServiceConfig | DynamicAutoEntityServiceConfig, deps?: any[]): Provider[] {
-  return [
-    EntityService,
-    createConfigProvider(config, deps)
-  ];
-}
