@@ -6,7 +6,7 @@
 
     <app-customer-table
       [customers]="customers.all$ | async"
-      (view)="customers.selectByKey($event)"
+      (view)="customers.selectByKey($event); accounts.loadManyIfNecessary({ customerId: $event })"
     ></app-customer-table>
   </div>
   <div>
@@ -15,7 +15,7 @@
         <h1>Customer</h1>
 
         @if ((customers.edited$ | async) != null) {
-          <form [formGroup]="customerForm" (ngSubmit)="customers.endEdit()">
+          <form [formGroup]="customerForm()" (ngSubmit)="customers.endEdit()">
             <button type="submit">Save</button>
             <button type="button" (click)="customers.endEdit()">Cancel</button>
 
@@ -52,7 +52,7 @@
           </form>
         } @else {
           <div>
-            <button (click)="customers.edit(customer); customerForm.reset(customer)">Edit</button>
+            <button (click)="customers.edit(customer)">Edit</button>
 
             <div class="form-group">
               <label for="isActive">Is Active</label>

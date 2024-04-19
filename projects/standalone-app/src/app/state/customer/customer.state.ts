@@ -1,4 +1,4 @@
-import { buildState, IEntityState } from '../../../../../../dist/ngrx-auto-entity';
+import { buildState, IEntityState } from '@briebug/ngrx-auto-entity';
 import { Action, createReducer, on } from '@ngrx/store';
 import { Customer } from '../../models/customer.model';
 

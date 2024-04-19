@@ -1,4 +1,4 @@
-import { Component, Input, output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, output } from '@angular/core';
 import { Customer } from '../models/customer.model';
 import { trackById } from '../app.utils';
 import { EntityIdentity } from '@briebug/ngrx-auto-entity';
@@ -38,5 +38,7 @@ export class CustomerTableComponent {
 
   @Input({ required: true }) customers: Customer[];
 
-  readonly view = output<EntityIdentity>();
+  @Output()
+  readonly view = new EventEmitter<EntityIdentity>();
+  // readonly view = output<EntityIdentity>();
 }
