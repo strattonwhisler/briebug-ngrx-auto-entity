@@ -1,15 +1,21 @@
 import { CommonModule } from '@angular/common';
 import { ModuleWithProviders, NgModule, Optional, SkipSelf } from '@angular/core';
-import { NgrxAutoEntityModule } from '@briebug/ngrx-auto-entity';
+import { NGRX_AUTO_ENTITY_APP_STORE, NgrxAutoEntityModule } from '@briebug/ngrx-auto-entity';
+import { NgrxAutoEntityServiceModule } from '@briebug/ngrx-auto-entity-service';
 import { EffectsModule } from '@ngrx/effects';
-import { RouterStateSerializer } from '@ngrx/router-store';
-import { StoreModule } from '@ngrx/store';
+import { RouterStateSerializer, StoreRouterConnectingModule } from '@ngrx/router-store';
+import { Store, StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-
-import { environment } from '../../environments/environment';
 
 import { appMetaReducers, appReducer } from './app.state';
 import { CustomRouterStateSerializer } from './shared/utils';
+import { ConfigService } from '../services/config.service';
+import { AccountStateModule } from './account';
+import { CustomerStateModule } from './customer';
+
+export function provideAppStore(store: Store<any>) {
+  return store;
+}
 
 @NgModule({
   imports: [
@@ -20,16 +26,30 @@ import { CustomRouterStateSerializer } from './shared/utils';
         strictStateImmutability: true
       }
     }),
+    StoreDevtoolsModule.instrument({ connectInZone: true }),
+    StoreRouterConnectingModule.forRoot(),
     EffectsModule.forRoot([]),
-    StoreDevtoolsModule.instrument({connectInZone: true}),
-    NgrxAutoEntityModule.forRoot()
+    NgrxAutoEntityModule.forRoot(),
+    NgrxAutoEntityServiceModule.forRoot(
+      configService => {
+        return {
+          urlPrefix: (...args) => configService.apiBaseUrl
+        };
+      },
+      [ConfigService]
+    ),
+    AccountStateModule,
+    CustomerStateModule
+  ],
+  providers: [
+    { provide: NGRX_AUTO_ENTITY_APP_STORE, useFactory: provideAppStore, deps: [Store] },
+    { provide: RouterStateSerializer, useClass: CustomRouterStateSerializer }
   ]
 })
 export class StateModule {
   static forRoot(): ModuleWithProviders<StateModule> {
     return {
-      ngModule: StateModule,
-      providers: [{ provide: RouterStateSerializer, useClass: CustomRouterStateSerializer }]
+      ngModule: StateModule
     };
   }
 

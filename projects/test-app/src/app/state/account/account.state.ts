@@ -1,6 +1,6 @@
 import { buildState, IEntityState } from '@briebug/ngrx-auto-entity';
 import { Action } from '@ngrx/store';
-import { Account } from '../models/account.model';
+import { Account } from '../../models/account.model';
 
 export const {
   initialState,

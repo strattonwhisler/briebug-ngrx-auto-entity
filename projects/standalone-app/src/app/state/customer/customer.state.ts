@@ -1,5 +1,5 @@
 import { buildState, IEntityState } from '@briebug/ngrx-auto-entity';
-import { Action, createReducer, on } from '@ngrx/store';
+import { Action, createAction, createReducer, on } from '@ngrx/store';
 import { Customer } from '../../models/customer.model';
 
 export const CUSTOMER_STATE_NAME = 'customer';

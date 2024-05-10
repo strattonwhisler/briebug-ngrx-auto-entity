@@ -39,7 +39,7 @@
     "serve": "ng serve test-app",
     "serve:prod": "ng serve test-app --configuration production",
     "serve-proxy": "ng serve test-app --proxy-config proxy.conf.json",
-    "serve-proxy:standalone": "ng serve standalone-app --proxy-config proxy.conf.json",
+    "serve-proxy:standalone": "ng serve standalone-app --proxy-config proxy.conf.json --port 4201",
     "build": "ng build test-app --configuration production",
     "build:watch": "ng build test-app --configuration production --watch",
     "build:lib:ae": "ng build ngrx-auto-entity --configuration production",
