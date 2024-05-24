@@ -4,12 +4,12 @@ jobs:
   build:
     working_directory: ~/ngrx-auto-entity
     docker:
-      - image: circleci/node:16-browsers
+      - image: cimg/node:lts-browsers
     steps:
       - checkout
       - run:
           name: Install dependencies
-          command: NODE_ENV=ci npm install --silent
+          command: NODE_ENV=ci npm ci --silent
       - run:
           name: Run linting
           command: npm run lint
