@@ -1,18 +1,23 @@
-version: 2
+version: 2.1
 
 jobs:
   build:
     working_directory: ~/ngrx-auto-entity
     docker:
-      - image: circleci/node:14.15-browsers
+      - image: circleci/node:16-browsers
     steps:
       - checkout
-      - run: NODE_ENV=ci npm install
-      - run: npm run lint
       - run:
+          name: Install dependencies
+          command: NODE_ENV=ci npm install --silent
+      - run:
+          name: Run linting
+          command: npm run lint
+      - run:
+          name: Run tests (with JUnit output)
           command: npm run test:ci
           environment:
-            JEST_JUNIT_OUTPUT: "reports/junit/js-test-results.xml"
+            JEST_JUNIT_OUTPUT: reports/junit/js-test-results.xml
       - store_test_results:
           path: reports/junit
       - store_artifacts:
