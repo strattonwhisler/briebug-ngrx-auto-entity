@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { Injectable, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { NGRX_AUTO_ENTITY_APP_STORE } from '@briebug/ngrx-auto-entity';
@@ -22,22 +22,16 @@ export class ConfigService {
   url = Promise.resolve(environment.API_BASE_URL);
 }
 
-@NgModule({
-  declarations: [AppComponent],
-  imports: [
-    CommonModule,
-    BrowserModule,
-    HttpClientModule,
-    NgrxAutoEntityServiceModule.forRoot((configService: ConfigService) => ({ urlPrefix: (...args) => configService.url }), [ConfigService]),
-    StateModule.forRoot(),
-    FeatureModule
-  ],
-  providers: [
-    ConfigService,
-    { provide: Customer, useClass: EntityService },
-    { provide: Account, useClass: EntityService },
-    { provide: NGRX_AUTO_ENTITY_APP_STORE, useFactory: provideAppStore, deps: [Store] }
-  ],
-  bootstrap: [AppComponent]
-})
+@NgModule({ declarations: [AppComponent],
+    bootstrap: [AppComponent], imports: [CommonModule,
+        BrowserModule,
+        NgrxAutoEntityServiceModule.forRoot((configService: ConfigService) => ({ urlPrefix: (...args) => configService.url }), [ConfigService]),
+        StateModule.forRoot(),
+        FeatureModule], providers: [
+        ConfigService,
+        { provide: Customer, useClass: EntityService },
+        { provide: Account, useClass: EntityService },
+        { provide: NGRX_AUTO_ENTITY_APP_STORE, useFactory: provideAppStore, deps: [Store] },
+        provideHttpClient(withInterceptorsFromDi())
+    ] })
 export class AppModule {}
