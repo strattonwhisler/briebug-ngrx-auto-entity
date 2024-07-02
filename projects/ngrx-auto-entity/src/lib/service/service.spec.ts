@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { Injectable, Injector } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
@@ -333,9 +333,9 @@ describe('NgRX Auto-Entity: Service', () => {
         teardown: { destroyAfterEach: false }
       });
       TestBed.configureTestingModule({
-        imports: [HttpClientModule, CommonModule],
-        providers: [{ provide: TestModel, useClass: TestModelService }, NgrxAutoEntityService]
-      });
+    imports: [CommonModule],
+    providers: [{ provide: TestModel, useClass: TestModelService }, NgrxAutoEntityService, provideHttpClient(withInterceptorsFromDi())]
+});
       entityService = TestBed.inject(NgrxAutoEntityService);
     });
 
