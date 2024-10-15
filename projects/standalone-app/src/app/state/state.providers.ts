@@ -10,6 +10,7 @@ import { provideAccountState } from './account';
 import { provideCustomerState } from './customer';
 import { CustomRouterStateSerializer } from './shared/utils';
 import { appMetaReducers, appReducer } from './app.state';
+import { withCustomStore } from '@briebug/ngrx-auto-entity/lib/provider';
 
 export function provideAppState() {
   return makeEnvironmentProviders([
