@@ -40,5 +40,6 @@
     "@angular/core": "17.x",
     "rxjs": "7.x",
     "@briebug/ngrx-auto-entity": "17.x"
-  }
+  },
+  "sideEffects": false
 }

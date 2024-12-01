@@ -59,5 +59,6 @@
     "@ngrx/effects": "17.x",
     "@ngrx/store": "17.x",
     "rxjs": "7.x"
-  }
+  },
+  "sideEffects": false
 }
