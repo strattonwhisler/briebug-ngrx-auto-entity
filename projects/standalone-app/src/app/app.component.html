@@ -5,12 +5,12 @@
     <h1>Customers</h1>
 
     <app-customer-table
-      [customers]="customers.all$ | async"
+      [customers]="customers.all()"
       (view)="customers.selectByKey($event); accounts.loadManyIfNecessary({ customerId: $event })"
     ></app-customer-table>
   </div>
   <div>
-    @if (customers.current$ | async; as customer) {
+    @if (customers.current(); as customer) {
       <div>
         <h1>Customer</h1>
 
@@ -20,7 +20,7 @@
         <h2>Accounts</h2>
 
         <app-account-table
-          [accounts]="accounts.currentForCurrentCustomer$ | async"
+          [accounts]="accounts.currentForCurrentCustomer()"
         ></app-account-table>
       </div>
     } @else {

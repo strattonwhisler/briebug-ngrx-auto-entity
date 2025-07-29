@@ -1,4 +1,4 @@
-import { Entity, Key } from '@briebug/ngrx-auto-entity';
+import { Entity, EntityActionTypes, Key } from '@briebug/ngrx-auto-entity';
 
 export const amountXform = {
   fromServer: (data: any): Account => ((data.amount = +data.amount), data),

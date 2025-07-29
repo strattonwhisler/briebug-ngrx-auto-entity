@@ -1,5 +1,12 @@
 <a name="13.0.2"></a>
 
+# [17.0.0]() Release
+
+### Breaking Changes !!
+
+- **selectors:** The `selectCustomSorted` selector has been removed. It relied on selectors with props, which have fallen out of practice.
+- **facade:** The `customSorted$` selection property has been removed. It relied on selectors with props, which have fallen out of practice.
+
 # [13.0.2](https://github.com/briebug/ngrx-auto-entity/compare/13.0.1...13.0.2) Release (2023-02-13)
 
 Fix release to resolve issues with sorting, introduced by recent refactoring. 

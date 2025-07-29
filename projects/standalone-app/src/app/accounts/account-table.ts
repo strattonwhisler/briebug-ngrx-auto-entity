@@ -18,7 +18,7 @@ import { Account } from '../models/account.model';
         </tr>
       </thead>
       <tbody>
-        @for (account of accounts; track byId) {
+        @for (account of accounts; track account.id) {
           <tr>
             <td>{{account.accountNumber}}</td>
             <td>{{account.name}}</td>
@@ -32,7 +32,5 @@ import { Account } from '../models/account.model';
   `
 })
 export class AccountTableComponent {
-  protected readonly byId = trackById;
-
   @Input({ required: true }) accounts: Account[];
 }

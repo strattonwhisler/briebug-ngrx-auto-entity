@@ -18,7 +18,7 @@ import { EntityIdentity } from '@briebug/ngrx-auto-entity';
         </tr>
       </thead>
       <tbody>
-        @for (customer of customers; track byId) {
+        @for (customer of customers; track customer.id) {
           <tr>
             <td>
               <input type="checkbox" [checked]="customer.isActive" disabled>
@@ -34,8 +34,6 @@ import { EntityIdentity } from '@briebug/ngrx-auto-entity';
   `
 })
 export class CustomerTableComponent {
-  protected readonly byId = trackById;
-
   @Input({ required: true }) customers: Customer[];
 
   @Output()

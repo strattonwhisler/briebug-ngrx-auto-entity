@@ -21,19 +21,25 @@ import { EntityIdentity } from '../types/entity-identity';
 import { IEntityDictionary } from './entity-state';
 import { IEntityFacade } from './facade';
 import { ISelectorMap } from './selector-map';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { inject, Signal } from '@angular/core';
+import { TNew } from '../actions/model-constructor';
 
 /**
  * Builds a new facade class for the specified entity model and parent state.
  * @param selectors - the selector map for the specified entity
+ * @param Type - the constructor for the specified entity
  */
-export const buildFacade = <TModel, TParentState>(selectors: ISelectorMap<TParentState, TModel>) => {
+export const buildFacade = <TModel, TParentState>(selectors: ISelectorMap<TParentState, TModel>, Type: TNew<TModel>) => {
   const BaseFacade = class Facade implements IEntityFacade<TModel> {
-    modelType: new () => TModel;
+    modelType: TNew<TModel>;
     store: Store<any>;
 
-    constructor(modelType: new () => TModel, store: Store<any>) {
-      this.modelType = modelType;
-      this.store = store;
+    constructor();
+    constructor(modelType: new () => TModel, store: Store<any>);
+    constructor(modelType?: TNew<TModel>, store?: Store<any>) {
+      this.modelType = modelType ?? Type;
+      this.store = store ?? inject(Store);
 
       this.all$ = this.store.select(selectors.selectAll);
       this.sorted$ = this.store.select(selectors.selectAllSorted);
@@ -63,6 +69,35 @@ export const buildFacade = <TModel, TParentState>(selectors: ISelectorMap<TParen
       this.updatedAt$ = this.store.select(selectors.selectUpdatedAt);
       this.replacedAt$ = this.store.select(selectors.selectReplacedAt);
       this.deletedAt$ = this.store.select(selectors.selectDeletedAt);
+
+      this.all = toSignal(this.all$);
+      this.sorted = toSignal(this.sorted$);
+      this.entities = toSignal(this.entities$);
+      this.ids = toSignal(this.ids$);
+      this.total = toSignal(this.total$);
+      this.hasEntities = toSignal(this.hasEntities$);
+      this.hasNoEntities = toSignal(this.hasNoEntities$);
+      this.total = toSignal(this.total$);
+      this.current = toSignal(this.current$);
+      this.currentKey = toSignal(this.currentKey$);
+      this.currentSet = toSignal(this.currentSet$);
+      this.currentSetKeys = toSignal(this.currentSetKeys$);
+      this.edited = toSignal(this.edited$);
+      this.isDirty = toSignal(this.isDirty$);
+      this.currentPage = toSignal(this.currentPage$);
+      this.currentRange = toSignal(this.currentRange$);
+      this.totalPageable = toSignal(this.totalPageable$);
+      this.hasBeenLoaded = toSignal(this.hasBeenLoaded$);
+      this.loadWasAttempted = toSignal(this.loadWasAttempted$);
+      this.isLoading = toSignal(this.isLoading$);
+      this.isSaving = toSignal(this.isSaving$);
+      this.isDeleting = toSignal(this.isDeleting$);
+      this.loadedAt = toSignal(this.loadedAt$);
+      this.savedAt = toSignal(this.savedAt$);
+      this.createdAt = toSignal(this.createdAt$);
+      this.updatedAt = toSignal(this.updatedAt$);
+      this.replacedAt = toSignal(this.replacedAt$);
+      this.deletedAt = toSignal(this.deletedAt$);
     }
 
     // region Selections
@@ -94,13 +129,33 @@ export const buildFacade = <TModel, TParentState>(selectors: ISelectorMap<TParen
     replacedAt$: Observable<Date>;
     deletedAt$: Observable<Date>;
 
-    /**
-     * @deprecated customSorted$ relies on selectors with props, which has fallen out of practice. Will be removed
-     * in the next version of auto-entity.
-     */
-    customSorted$(name: string): Observable<TModel[]> {
-      return this.store.select(selectors.selectCustomSorted, { name });
-    }
+    all: Signal<TModel[]>;
+    sorted: Signal<TModel[]>;
+    entities: Signal<IEntityDictionary<TModel>>;
+    ids: Signal<EntityIdentity[]>;
+    total: Signal<number>;
+    hasEntities: Signal<boolean>;
+    hasNoEntities: Signal<boolean>;
+    current: Signal<TModel>;
+    currentKey: Signal<EntityIdentity>;
+    currentSet: Signal<TModel[]>;
+    currentSetKeys: Signal<EntityIdentity[]>;
+    edited: Signal<Partial<TModel>>;
+    isDirty: Signal<boolean>;
+    currentPage: Signal<Page>;
+    currentRange: Signal<Range>;
+    totalPageable: Signal<number>;
+    hasBeenLoaded: Signal<boolean>;
+    loadWasAttempted: Signal<boolean>;
+    isLoading: Signal<boolean>;
+    isSaving: Signal<boolean>;
+    isDeleting: Signal<boolean>;
+    loadedAt: Signal<Date>;
+    savedAt: Signal<Date>;
+    createdAt: Signal<Date>;
+    updatedAt: Signal<Date>;
+    replacedAt: Signal<Date>;
+    deletedAt: Signal<Date>;
     // endregion
 
     // region Activities

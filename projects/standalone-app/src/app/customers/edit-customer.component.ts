@@ -1,24 +1,23 @@
 import { Component, inject } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { CustomerFacade } from '../state/customer';
-import { distinctUntilChanged, scan, share, switchMap } from 'rxjs/operators';
+import { distinctUntilChanged, scan, shareReplay, switchMap } from 'rxjs/operators';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Customer } from '../models/customer.model';
 import { TypedForm } from '../models/form.models';
-import { Observable } from 'rxjs';
+import { Observable, OperatorFunction } from 'rxjs';
 
 type CustomerForm = TypedForm<Omit<Customer, 'id'>>;
 
 @Component({
   selector: 'app-edit-customer',
   standalone: true,
-  imports: [AsyncPipe, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   template: `
     <form [formGroup]="customerForm()" (ngSubmit)="submit()">
       <div class="form-actions">
-        @if (customers.edited$ | async) {
-          <button type="submit">Save</button>
+        @if (customers.edited() != null) {
+          <button type="submit" [disabled]="!customerForm().dirty">Save</button>
           <button type="button" (click)="cancel()">Cancel</button>
         } @else {
           <button type="button" (click)="edit()">Edit</button>
@@ -65,17 +64,15 @@ export class EditCustomerComponent {
 
   private customerForm$: Observable<CustomerForm> = this.customers.current$.pipe(
     distinctUntilChanged(),
-    scan((form, customer) => {
+    scan((form, value) => {
       if (form) {
-        form.patchValue(customer);
-        return form;
+        form.patchValue(value);
       } else {
-        const form = createCustomerForm(this.fb, customer);
-        form.disable();
-        return form;
+        form = createCustomerForm(this.fb, value);
       }
-    }, null),
-    share()
+      return form;
+    }, null as CustomerForm),
+    shareReplay(1)
   );
 
   protected customerForm = toSignal(this.customerForm$);
@@ -90,12 +87,14 @@ export class EditCustomerComponent {
 
   protected edit(): void {
     this.customerForm().enable();
-    this.customers.editNew();
+    this.customers.edit(this.customers.current());
   }
 
   protected cancel(): void {
     this.customers.endEdit();
     //TODO: reset form
+    this.customerForm().patchValue(this.customers.current());
+    this.customerForm().disable();
   }
 
   protected submit(): void {
@@ -114,5 +113,5 @@ function createCustomerForm (fb: FormBuilder, customer: Customer): CustomerForm 
       state: [customer?.address?.state ?? ''],
       zip: [customer?.address?.zip ?? ''],
     })
-  })
+  });
 }

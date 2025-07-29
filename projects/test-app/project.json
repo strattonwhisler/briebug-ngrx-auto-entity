@@ -10,7 +10,7 @@
       "executor": "@angular-devkit/build-angular:application",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/projects/test-app",
+        "outputPath": "dist/test-app",
         "index": "projects/test-app/src/index.html",
         "browser": "projects/test-app/src/main.ts",
         "polyfills": ["zone.js"],

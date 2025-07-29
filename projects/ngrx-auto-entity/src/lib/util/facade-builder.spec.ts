@@ -7,6 +7,8 @@ import { buildFacade } from './facade-builder';
 import { makeEntity } from './make-entity';
 import { ISelectorMap } from './selector-map';
 import { buildSelectorMap } from './selector-map-builder';
+import { Signal } from '@angular/core';
+import { EntityIdentity, IEntityDictionary, Page, Range } from '@briebug/ngrx-auto-entity';
 
 @Entity({
   modelName: 'Test'
@@ -39,12 +41,11 @@ describe('buildFacade()', () => {
   });
 
   it('should return a new dynamic class', () => {
-    const FacadeBaseClass = buildFacade({} as ISelectorMap<Test, any>);
+    const FacadeBaseClass = buildFacade({} as ISelectorMap<Test, any>, Test);
     expect(FacadeBaseClass.constructor).toBeDefined();
 
     expect(Object.getOwnPropertyNames(FacadeBaseClass.prototype)).toEqual([
       'constructor',
-      'customSorted$',
       'select',
       'selectByKey',
       'selectMany',
@@ -89,8 +90,8 @@ describe('buildFacade()', () => {
   it('should have selection properties when creating new instances of facade class', () => {
     const store: MockStore = TestBed.inject(MockStore);
     const selectorMap = buildSelectorMap(state => state.test, Test);
-    const FacadeBaseClass = buildFacade(selectorMap);
-    const facade = new FacadeBaseClass(Test, store);
+    const FacadeBaseClass = buildFacade(selectorMap, Test);
+    const facade = TestBed.runInInjectionContext(() => new FacadeBaseClass(Test, store));
     expect(facade).toBeDefined();
 
     expect(Object.getOwnPropertyNames(facade)).toEqual([
@@ -122,12 +123,38 @@ describe('buildFacade()', () => {
       'createdAt$',
       'updatedAt$',
       'replacedAt$',
-      'deletedAt$'
+      'deletedAt$',
+      'all',
+      'sorted',
+      'entities',
+      'ids',
+      'total',
+      'hasEntities',
+      'hasNoEntities',
+      'current',
+      'currentKey',
+      'currentSet',
+      'currentSetKeys',
+      'edited',
+      'isDirty',
+      'currentPage',
+      'currentRange',
+      'totalPageable',
+      'hasBeenLoaded',
+      'loadWasAttempted',
+      'isLoading',
+      'isSaving',
+      'isDeleting',
+      'loadedAt',
+      'savedAt',
+      'createdAt',
+      'updatedAt',
+      'replacedAt',
+      'deletedAt'
     ]);
 
     expect(Object.getOwnPropertyNames(Object.getPrototypeOf(facade))).toEqual([
       'constructor',
-      'customSorted$',
       'select',
       'selectByKey',
       'selectMany',

@@ -1,7 +1,6 @@
 import { createSelector, MemoizedSelector, Selector } from '@ngrx/store';
 import { mapToEditedEntity, mapToIsDirty } from '../selectors/edits.selectors';
 import {
-  mapToCustomSortedEntityArray,
   mapToEntityArray,
   mapToHasEntities,
   mapToHasNoEntities,
@@ -71,10 +70,6 @@ export const buildSelectorMap = <TParentState, TState extends IEntityState<TMode
 
     get selectAllSorted() {
       return createSelector(this.selectAll, mapToSortedEntityArray(type));
-    }
-
-    get selectCustomSorted() {
-      return createSelector(this.selectAll, mapToCustomSortedEntityArray(type));
     }
 
     get selectTotal() {

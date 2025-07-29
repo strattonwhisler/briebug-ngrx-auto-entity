@@ -45,7 +45,6 @@ describe('buildState()', () => {
     });
     expect(built.selectors).toSatisfy(selectors => selectors.__proto__.hasOwnProperty('selectAll'));
     expect(built.selectors).toSatisfy(selectors => selectors.__proto__.hasOwnProperty('selectAllSorted'));
-    expect(built.selectors).toSatisfy(selectors => selectors.__proto__.hasOwnProperty('selectCustomSorted'));
     expect(built.selectors).toSatisfy(selectors => selectors.__proto__.hasOwnProperty('selectEntities'));
     expect(built.selectors).toSatisfy(selectors => selectors.__proto__.hasOwnProperty('selectIds'));
     expect(built.selectors).toSatisfy(selectors => selectors.__proto__.hasOwnProperty('selectTotal'));

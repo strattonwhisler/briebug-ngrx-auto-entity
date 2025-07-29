@@ -6,7 +6,4 @@ import { Product } from '../../models/product.model';
 
 @Injectable()
 export class ProductFacade extends ProductFacadeBase {
-  constructor(private store: Store<AppState>) {
-    super(Product, store);
-  }
 }
